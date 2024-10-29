@@ -1,4 +1,4 @@
-##To build 
+## To build 
 - Step one:
   - Find Goshsha_Capstone with an APP icon in left side Project Navigator bar
   - Find Build Phases
