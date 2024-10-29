@@ -1,0 +1,557 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXContainerItemProxy section */
+		A02164D32CD069CB00711FD3 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A02164BA2CD069C800711FD3 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A02164C12CD069C800711FD3;
+			remoteInfo = "Goshsha Capstone";
+		};
+		A02164DD2CD069CB00711FD3 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A02164BA2CD069C800711FD3 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A02164C12CD069C800711FD3;
+			remoteInfo = "Goshsha Capstone";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		A02164C22CD069C800711FD3 /* Goshsha Capstone.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Goshsha Capstone.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A02164D22CD069CB00711FD3 /* Goshsha CapstoneTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Goshsha CapstoneTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A02164DC2CD069CB00711FD3 /* Goshsha CapstoneUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Goshsha CapstoneUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		A02164C42CD069C800711FD3 /* Goshsha Capstone */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "Goshsha Capstone";
+			sourceTree = "<group>";
+		};
+		A02164D52CD069CB00711FD3 /* Goshsha CapstoneTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "Goshsha CapstoneTests";
+			sourceTree = "<group>";
+		};
+		A02164DF2CD069CB00711FD3 /* Goshsha CapstoneUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "Goshsha CapstoneUITests";
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A02164BF2CD069C800711FD3 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A02164CF2CD069CB00711FD3 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A02164D92CD069CB00711FD3 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A02164B92CD069C800711FD3 = {
+			isa = PBXGroup;
+			children = (
+				A02164C42CD069C800711FD3 /* Goshsha Capstone */,
+				A02164D52CD069CB00711FD3 /* Goshsha CapstoneTests */,
+				A02164DF2CD069CB00711FD3 /* Goshsha CapstoneUITests */,
+				A02164C32CD069C800711FD3 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A02164C32CD069C800711FD3 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A02164C22CD069C800711FD3 /* Goshsha Capstone.app */,
+				A02164D22CD069CB00711FD3 /* Goshsha CapstoneTests.xctest */,
+				A02164DC2CD069CB00711FD3 /* Goshsha CapstoneUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A02164C12CD069C800711FD3 /* Goshsha Capstone */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A02164E62CD069CB00711FD3 /* Build configuration list for PBXNativeTarget "Goshsha Capstone" */;
+			buildPhases = (
+				A02164BE2CD069C800711FD3 /* Sources */,
+				A02164BF2CD069C800711FD3 /* Frameworks */,
+				A02164C02CD069C800711FD3 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				A02164C42CD069C800711FD3 /* Goshsha Capstone */,
+			);
+			name = "Goshsha Capstone";
+			packageProductDependencies = (
+			);
+			productName = "Goshsha Capstone";
+			productReference = A02164C22CD069C800711FD3 /* Goshsha Capstone.app */;
+			productType = "com.apple.product-type.application";
+		};
+		A02164D12CD069CB00711FD3 /* Goshsha CapstoneTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A02164E92CD069CB00711FD3 /* Build configuration list for PBXNativeTarget "Goshsha CapstoneTests" */;
+			buildPhases = (
+				A02164CE2CD069CB00711FD3 /* Sources */,
+				A02164CF2CD069CB00711FD3 /* Frameworks */,
+				A02164D02CD069CB00711FD3 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A02164D42CD069CB00711FD3 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				A02164D52CD069CB00711FD3 /* Goshsha CapstoneTests */,
+			);
+			name = "Goshsha CapstoneTests";
+			packageProductDependencies = (
+			);
+			productName = "Goshsha CapstoneTests";
+			productReference = A02164D22CD069CB00711FD3 /* Goshsha CapstoneTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		A02164DB2CD069CB00711FD3 /* Goshsha CapstoneUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A02164EC2CD069CB00711FD3 /* Build configuration list for PBXNativeTarget "Goshsha CapstoneUITests" */;
+			buildPhases = (
+				A02164D82CD069CB00711FD3 /* Sources */,
+				A02164D92CD069CB00711FD3 /* Frameworks */,
+				A02164DA2CD069CB00711FD3 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A02164DE2CD069CB00711FD3 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				A02164DF2CD069CB00711FD3 /* Goshsha CapstoneUITests */,
+			);
+			name = "Goshsha CapstoneUITests";
+			packageProductDependencies = (
+			);
+			productName = "Goshsha CapstoneUITests";
+			productReference = A02164DC2CD069CB00711FD3 /* Goshsha CapstoneUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A02164BA2CD069C800711FD3 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1600;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					A02164C12CD069C800711FD3 = {
+						CreatedOnToolsVersion = 16.0;
+					};
+					A02164D12CD069CB00711FD3 = {
+						CreatedOnToolsVersion = 16.0;
+						TestTargetID = A02164C12CD069C800711FD3;
+					};
+					A02164DB2CD069CB00711FD3 = {
+						CreatedOnToolsVersion = 16.0;
+						TestTargetID = A02164C12CD069C800711FD3;
+					};
+				};
+			};
+			buildConfigurationList = A02164BD2CD069C800711FD3 /* Build configuration list for PBXProject "Goshsha Capstone" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = A02164B92CD069C800711FD3;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = A02164C32CD069C800711FD3 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A02164C12CD069C800711FD3 /* Goshsha Capstone */,
+				A02164D12CD069CB00711FD3 /* Goshsha CapstoneTests */,
+				A02164DB2CD069CB00711FD3 /* Goshsha CapstoneUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A02164C02CD069C800711FD3 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A02164D02CD069CB00711FD3 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A02164DA2CD069CB00711FD3 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A02164BE2CD069C800711FD3 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A02164CE2CD069CB00711FD3 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A02164D82CD069CB00711FD3 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		A02164D42CD069CB00711FD3 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A02164C12CD069C800711FD3 /* Goshsha Capstone */;
+			targetProxy = A02164D32CD069CB00711FD3 /* PBXContainerItemProxy */;
+		};
+		A02164DE2CD069CB00711FD3 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A02164C12CD069C800711FD3 /* Goshsha Capstone */;
+			targetProxy = A02164DD2CD069CB00711FD3 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		A02164E42CD069CB00711FD3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		A02164E52CD069CB00711FD3 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		A02164E72CD069CB00711FD3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"Goshsha Capstone/Preview Content\"";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "-.Goshsha-Capstone";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A02164E82CD069CB00711FD3 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"Goshsha Capstone/Preview Content\"";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "-.Goshsha-Capstone";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		A02164EA2CD069CB00711FD3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "-.Goshsha-CapstoneTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Goshsha Capstone.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Goshsha Capstone";
+			};
+			name = Debug;
+		};
+		A02164EB2CD069CB00711FD3 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "-.Goshsha-CapstoneTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Goshsha Capstone.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Goshsha Capstone";
+			};
+			name = Release;
+		};
+		A02164ED2CD069CB00711FD3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "-.Goshsha-CapstoneUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = "Goshsha Capstone";
+			};
+			name = Debug;
+		};
+		A02164EE2CD069CB00711FD3 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "-.Goshsha-CapstoneUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = "Goshsha Capstone";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A02164BD2CD069C800711FD3 /* Build configuration list for PBXProject "Goshsha Capstone" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A02164E42CD069CB00711FD3 /* Debug */,
+				A02164E52CD069CB00711FD3 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A02164E62CD069CB00711FD3 /* Build configuration list for PBXNativeTarget "Goshsha Capstone" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A02164E72CD069CB00711FD3 /* Debug */,
+				A02164E82CD069CB00711FD3 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A02164E92CD069CB00711FD3 /* Build configuration list for PBXNativeTarget "Goshsha CapstoneTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A02164EA2CD069CB00711FD3 /* Debug */,
+				A02164EB2CD069CB00711FD3 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A02164EC2CD069CB00711FD3 /* Build configuration list for PBXNativeTarget "Goshsha CapstoneUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A02164ED2CD069CB00711FD3 /* Debug */,
+				A02164EE2CD069CB00711FD3 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = A02164BA2CD069C800711FD3 /* Project object */;
+}
