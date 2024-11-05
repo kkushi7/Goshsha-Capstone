@@ -14,6 +14,22 @@ class ScrapBookViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        //Show a label in ScrapBook page
+        view.backgroundColor = .white
+                
+        let label = UILabel()
+        label.text = "ScrapBook"
+        label.textAlignment = .center
+        label.font = UIFont.systemFont(ofSize: 24)
+        label.textColor = .black
+        
+        label.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(label)
+        
+        NSLayoutConstraint.activate([
+            label.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            label.centerYAnchor.constraint(equalTo: view.centerYAnchor)
+        ])
 
 
     }

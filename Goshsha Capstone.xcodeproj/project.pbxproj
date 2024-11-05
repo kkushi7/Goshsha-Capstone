@@ -29,9 +29,22 @@
 		A02164DC2CD069CB00711FD3 /* Goshsha CapstoneUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Goshsha CapstoneUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		A0FCAEFE2CD18F660046CF0B /* Exceptions for "Goshsha Capstone" folder in "Goshsha Capstone" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = A02164C12CD069C800711FD3 /* Goshsha Capstone */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		A02164C42CD069C800711FD3 /* Goshsha Capstone */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				A0FCAEFE2CD18F660046CF0B /* Exceptions for "Goshsha Capstone" folder in "Goshsha Capstone" target */,
+			);
 			path = "Goshsha Capstone";
 			sourceTree = "<group>";
 		};
@@ -397,7 +410,8 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"Goshsha Capstone/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "/Users/taodingxin/Desktop/Goshsha_Capstone/Goshsha Capstone/Info.plist";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -425,7 +439,8 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"Goshsha Capstone/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "/Users/taodingxin/Desktop/Goshsha_Capstone/Goshsha Capstone/Info.plist";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
