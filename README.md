@@ -13,3 +13,9 @@
   - Go to Developer
   - Go to Xcode
   - Go to Goshsha_Capstone...... and delete it
+
+- Step Four:
+  - copy the full path of Info.plist e.g(/Users/taodingxin/Desktop/Goshsha_Capstone/Goshsha Capstone/Info.plist)
+  - Find Goshsha_Capstone Project -> Build Settings -> Packaging -> Info.plist File, and paste path to it
+  - Generate Info.plist File -> No
+  - Make sure in Build Phases, the Info.plist in Copy Bundle Resources is removed.
