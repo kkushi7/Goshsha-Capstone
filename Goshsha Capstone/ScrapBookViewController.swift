@@ -7,12 +7,16 @@
 
 import Foundation
 import UIKit
+import Firebase
 
 class ScrapBookViewController: UIViewController {
     
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        FirebaseApp.configure()
+        print("Configured Firebase")
         
         //Show a label in ScrapBook page
         view.backgroundColor = .white
