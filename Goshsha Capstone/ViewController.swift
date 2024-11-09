@@ -8,9 +8,9 @@
 import UIKit
 //import FirebaseUI
 import Photos
-//import FirebaseFirestore
-//import Firebase
-//import FirebaseStorage
+import FirebaseFirestore
+import Firebase
+import FirebaseStorage
 import MobileCoreServices
 import ReplayKit
 import SafariServices
