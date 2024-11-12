@@ -55,19 +55,33 @@ class ScrapBookViewController: UIViewController {
             bottomToolbar.heightAnchor.constraint(equalToConstant: 40)
         ])
         
-        // Create a favorite button (favButton) to add to the toolbar
         let backButton = UIBarButtonItem(image: UIImage(systemName: "arrow.backward"), style: .plain, target: self, action: #selector(backButtonTapped))
         backButton.tintColor = .blue
         
-        // Set the buttons on the toolbar
+        let newButton = UIBarButtonItem(image: UIImage(systemName: "pencil.tip.crop.circle.badge.plus"), style: .plain, target: self, action: #selector(newButtonTapped))
+        newButton.tintColor = .blue
+
+        let exportButton = UIBarButtonItem(image: UIImage(systemName: "square.and.arrow.up"), style: .plain, target: self, action: #selector(exportButtonTapped))
+        exportButton.tintColor = .blue
+        
         let flexibleSpace = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
-        bottomToolbar.setItems([flexibleSpace, backButton], animated: false)
+        bottomToolbar.setItems([backButton, flexibleSpace, newButton, flexibleSpace, exportButton], animated: false)
         
     }
-     
-     // Function to handle when the backButton is tapped
-     @objc func backButtonTapped() {
-         //close current page, back to main page
-         dismiss(animated: true, completion: nil)
-     }
+    
+    @objc func backButtonTapped() {
+        dismiss(animated: true, completion: nil)
+    }
+    
+    @objc func newButtonTapped() {
+        print("New button tapped")
+        // Direct to EditScrapbook page
+        let editScrapbookVC = EditScrapbookViewController()
+        editScrapbookVC.modalPresentationStyle = .fullScreen
+        present(editScrapbookVC, animated: true, completion: nil)
+    }
+
+    @objc func exportButtonTapped() {
+        print("Export button tapped")
+    }
 }
