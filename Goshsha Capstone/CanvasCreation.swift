@@ -25,7 +25,7 @@ extension UIViewController {
         var constraints = [
             canvasView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             canvasView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            canvasView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20)
+            canvasView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -80)
         ]
         
     

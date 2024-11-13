@@ -9,6 +9,8 @@ import UIKit
 
 class EditScrapbookViewController: UIViewController {
     
+    var topToolbar: UIToolbar!
+    var canvasView: UIView!
     var bottomToolbar: UIToolbar!
     
     override func viewDidLoad() {
@@ -16,42 +18,61 @@ class EditScrapbookViewController: UIViewController {
         
         view.backgroundColor = .white
         
-        let label = UILabel()
-        label.text = "Edit Scrapbook"
-        label.textAlignment = .center
-        label.font = UIFont.systemFont(ofSize: 24)
-        label.textColor = .black
-        label.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(label)
+        //show user's ScrapBook name
+        showScrapBookNameLabel()
         
-        NSLayoutConstraint.activate([
-            label.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            label.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20)
-        ])
+        //set top tool bar
+        setupTopToolbar()
         
         //set Scarpbook canvas
-        setupCanvas()
+        canvasView  = setupCanvas(below: topToolbar)
         
         //set bottom tool bar
         setupBottomToolbar()
     }
     
-    func setupCanvas() {
-        let canvasView = UIImageView()
-        canvasView.backgroundColor = UIColor(white: 0.95, alpha: 1.0)
-        canvasView.layer.borderWidth = 1
-        canvasView.layer.borderColor = UIColor.lightGray.cgColor
-        canvasView.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(canvasView)
+    func showScrapBookNameLabel() {
+        let label = UILabel()
+        label.text = "Your SCRAPBOOK"
+        label.textAlignment = .center
+        label.font = UIFont(name: "Helvetica-Bold", size: 34)
+        label.textColor = .black
+        label.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(label)
         
         NSLayoutConstraint.activate([
-            canvasView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            canvasView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            canvasView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 80),
-            canvasView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -80)
+            label.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16),
+            label.centerXAnchor.constraint(equalTo: view.centerXAnchor)
         ])
-        
-        // Implement Edit functions here
+    }
+    
+    // this will be replaced by UIkit api tools
+    func setupTopToolbar() {
+            topToolbar = UIToolbar()
+            topToolbar.translatesAutoresizingMaskIntoConstraints = false
+            view.addSubview(topToolbar)
+            
+            NSLayoutConstraint.activate([
+                topToolbar.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 60),
+                topToolbar.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+                topToolbar.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+                topToolbar.heightAnchor.constraint(equalToConstant: 40)
+            ])
+            
+            // "Text" button
+            let textButton = UIBarButtonItem(image: UIImage(systemName: "square.and.pencil"), style: .plain, target: self, action: #selector(addText))
+            textButton.tintColor = .blue
+            
+            // "Photo" button
+            let photoButton = UIBarButtonItem(image: UIImage(systemName: "photo.on.rectangle.angled"), style: .plain, target: self, action: #selector(addPhoto))
+            photoButton.tintColor = .blue
+            
+            // "Sticker" button
+            let stickerButton = UIBarButtonItem(image: UIImage(systemName: "face.smiling"), style: .plain, target: self, action: #selector(addSticker))
+            stickerButton.tintColor = .blue
+            
+            let flexibleSpace = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
+            topToolbar.setItems([textButton, flexibleSpace, photoButton, flexibleSpace, stickerButton], animated: false)
     }
     
     func setupBottomToolbar() {
@@ -69,7 +90,7 @@ class EditScrapbookViewController: UIViewController {
             let backButton = UIBarButtonItem(image: UIImage(systemName: "arrow.backward"), style: .plain, target: self, action: #selector(backButtonTapped))
             backButton.tintColor = .blue
             
-            let saveButton = UIBarButtonItem(image: UIImage(systemName: "square.and.arrow.down"), style: .plain, target: self, action: #selector(saveButtonTapped))
+            let saveButton = UIBarButtonItem(image: UIImage(systemName: "lock"), style: .plain, target: self, action: #selector(saveButtonTapped))
             saveButton.tintColor = .blue
             
             let exportButton = UIBarButtonItem(image: UIImage(systemName: "square.and.arrow.up"), style: .plain, target: self, action: #selector(exportButtonTapped))
@@ -79,15 +100,33 @@ class EditScrapbookViewController: UIViewController {
             bottomToolbar.setItems([backButton, flexibleSpace, saveButton, flexibleSpace, exportButton], animated: false)
         }
         
-        @objc func backButtonTapped() {
-            dismiss(animated: true, completion: nil)
-        }
+    @objc func backButtonTapped() {
+        dismiss(animated: true, completion: nil)
+    }
+    
+    @objc func saveButtonTapped() {
+        print("Save button tapped")
+    }
+    
+    @objc func exportButtonTapped() {
+        print("Export button tapped")
+    }
+
+    @objc func addText() {
+        let textbox = UITextField(frame : CGRect(x: 50, y: 50, width: 150, height: 40))
+        textbox.placeholder = "Enter text..."
+        textbox.borderStyle = .roundedRect
+        textbox.keyboardType = .default
         
-        @objc func saveButtonTapped() {
-            print("Save button tapped")
-        }
+        // Add element to view as a subview
+        view.addSubview(textbox)
+    }
         
-        @objc func exportButtonTapped() {
-            print("Export button tapped")
-        }
+    @objc func addPhoto() {
+        print("Add Photo tapped")
+    }
+    
+    @objc func addSticker() {
+        print("Add Sticker tapped")
+    }
 }

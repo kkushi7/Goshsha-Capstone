@@ -58,7 +58,7 @@ class ViewController: UIViewController {
         NSLayoutConstraint.activate([
             bottomToolbar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             bottomToolbar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            bottomToolbar.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -10), // Move it 20 points higher
+            bottomToolbar.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: 10), // Move it 20 points higher
             bottomToolbar.heightAnchor.constraint(equalToConstant: 40) // Adjust toolbar height
         ])
         

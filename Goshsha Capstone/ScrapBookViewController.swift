@@ -12,6 +12,7 @@ import Firebase
 class ScrapBookViewController: UIViewController {
     
     var bottomToolbar: UIToolbar!
+    var canvasView: UIView!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -23,19 +24,20 @@ class ScrapBookViewController: UIViewController {
         view.backgroundColor = .white
                 
         let label = UILabel()
-        label.text = "ScrapBook"
+        label.text = "SCRAPBOOK NAME"
         label.textAlignment = .center
-        label.font = UIFont.systemFont(ofSize: 24)
+        label.font = UIFont(name: "Helvetica-Bold", size: 34)
         label.textColor = .black
-        
         label.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(label)
         
         NSLayoutConstraint.activate([
-            label.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            label.centerYAnchor.constraint(equalTo: view.centerYAnchor)
+            label.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16),
+            label.centerXAnchor.constraint(equalTo: view.centerXAnchor)
         ])
 
+        canvasView = setupCanvas(below: label)
+        
         //set bottom tool bar
         setupBottomToolbar()
     }
@@ -51,7 +53,7 @@ class ScrapBookViewController: UIViewController {
         NSLayoutConstraint.activate([
             bottomToolbar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             bottomToolbar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            bottomToolbar.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -10),
+            bottomToolbar.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: 10),
             bottomToolbar.heightAnchor.constraint(equalToConstant: 40)
         ])
         
