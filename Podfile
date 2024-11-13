@@ -1,11 +1,14 @@
 # Uncomment the next line to define a global platform for your project
-# platform :ios, '9.0'
+platform :ios, '18.0'
 
 target 'Goshsha Capstone' do
   # Comment the next line if you don't want to use dynamic frameworks
   use_frameworks!
 
   # Pods for Goshsha Capstone
+  pod 'FirebaseUI'
+  pod 'FirebaseUI/Auth'
+  pod 'FIrebaseUI/OAuth'
 
   target 'Goshsha CapstoneTests' do
     inherit! :search_paths

@@ -9,6 +9,7 @@ import UIKit
 //import FirebaseUI
 import Photos
 import FirebaseFirestore
+import FirebaseAuth
 import Firebase
 import FirebaseStorage
 import MobileCoreServices
@@ -28,7 +29,7 @@ extension ViewController: RPPreviewViewControllerDelegate {
 
 class ViewController: UIViewController {
     
-//    let db = Firestore.firestore()
+    let db = Firestore.firestore()
     
     var bottomToolbar: UIToolbar!
     
@@ -71,13 +72,13 @@ class ViewController: UIViewController {
         loginLogoutButton.tintColor = .blue
         
         // Check if the user is logged in or not and update the icon accordingly
-//        if Auth.auth().currentUser != nil {
-//            // User is logged in, set to logout icon
-//            loginLogoutButton.image = UIImage(systemName: "door.left.hand.open")
-//        } else {
-//            // User is not logged in, set to login icon
-//            loginLogoutButton.image = UIImage(systemName: "door.right.hand.open")
-//        }
+        if Auth.auth().currentUser != nil {
+            // User is logged in, set to logout icon
+            loginLogoutButton.image = UIImage(systemName: "door.left.hand.open")
+        } else {
+            // User is not logged in, set to login icon
+            loginLogoutButton.image = UIImage(systemName: "door.right.hand.open")
+        }
         
         // Set the buttons on the toolbar
         let flexibleSpace = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
@@ -85,16 +86,15 @@ class ViewController: UIViewController {
         
     }
      
-     // Function to handle when the favButton is tapped
-     @objc func scrapBookButtonTapped() {
-//         if Auth.auth().currentUser == nil {
-//             // User is not logged in, segue to LoginController
-//             TFtriggers.signInFromVC = true // so that the right webview is loaded
-//             segueToLoginController()
-//         }
-        
-        segueToScrapBookVC()
-        
+    // Function to handle when the scarpbookButton is tapped
+    @objc func scrapBookButtonTapped() {
+        if Auth.auth().currentUser == nil {
+            // User is not logged in, segue to LoginController
+            segueToLoginController()
+        } else {
+            // User is logged in, segue to ScrapBookController
+            segueToScrapBookVC()
+        }
      }
     
     
@@ -106,38 +106,39 @@ class ViewController: UIViewController {
              }
     }
     
+    func segueToLoginController() {
+        let storyboard = UIStoryboard(name: "Main", bundle: nil)
+        if let loginController = storyboard.instantiateViewController(withIdentifier: "LoginController") as? LoginController {
+            loginController.modalPresentationStyle = .fullScreen
+            present(loginController, animated: true, completion: nil)
+        }
+    }
+    
     // Function to login & logout
     @objc func loginLogoutTapped() {
         // Check if the user is logged in or not
-//        if Auth.auth().currentUser != nil {
-//            // User is logged in, log them out
-//            do {
-//                try Auth.auth().signOut()
-//                TFtriggers.signInFromFavHis = false
-//                TFtriggers.signInFromVC = false
-//                // Update the button icon to login icon
-//                if let toolbarItems = bottomToolbar.items {
-//                    if let loginLogoutButton = toolbarItems.last {
-//                        loginLogoutButton.image = UIImage(systemName: "door.right.hand.open")
-//                    }
-//                }
-//            } catch let signOutError as NSError {
-//                print("Error signing out: %@", signOutError)
-//            }
-//        } else {
+        if Auth.auth().currentUser != nil {
+            // User is logged in, log them out
+            do {
+                try Auth.auth().signOut()
+                // Update the button icon to login icon
+                if let toolbarItems = bottomToolbar.items {
+                    if let loginLogoutButton = toolbarItems.last {
+                        loginLogoutButton.image = UIImage(systemName: "door.right.hand.open")
+                    }
+                }
+            } catch let signOutError as NSError {
+                print("Error signing out: %@", signOutError)
+            }
+        } else {
             // User is not logged in, present the login view
-//            let storyboard = UIStoryboard(name: "Main", bundle: nil)
-//            if let loginController = storyboard.instantiateViewController(withIdentifier: "LoginController") as? LoginController {
-//                loginController.modalPresentationStyle = .fullScreen
-//                present(loginController, animated: true, completion: nil)
-//            }
-//            // After login, update the button icon to logout
-//            if let toolbarItems = bottomToolbar.items {
-//                if let loginLogoutButton = toolbarItems.last {
-//                    loginLogoutButton.image = UIImage(systemName: "door.left.hand.open")
-//                }
-//            }
-//        }
+            segueToLoginController()
+            
+            // After login, update the button icon to logout
+            if let toolbarItems = bottomToolbar.items, let loginLogoutButton = toolbarItems.last {
+                loginLogoutButton.image = UIImage(systemName: "door.left.hand.open")
+            }
+        }
     }
 
 
