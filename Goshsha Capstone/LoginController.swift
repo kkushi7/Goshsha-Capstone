@@ -7,8 +7,11 @@
 
 import UIKit
 import FirebaseAuth
+import FirebaseFirestore
 
 class LoginController: UIViewController {
+    
+    let db = Firestore.firestore();
     
     // UI for email and password input
     private let emailTextField: UITextField = {
@@ -84,6 +87,8 @@ class LoginController: UIViewController {
                     self?.showAlert(message: error.localizedDescription)
                 }
             } else {
+                // Update exist user data
+                self?.saveUserData()
                 // sign-in
                 self?.dismiss(animated: true, completion: nil)
             }
@@ -96,10 +101,72 @@ class LoginController: UIViewController {
             if let error = error {
                 self?.showAlert(message: error.localizedDescription)
             } else {
+                // Register and create user data
+                self?.saveUserData()
                 // New account created and signed in
                 self?.dismiss(animated: true, completion: nil)
             }
         }
+    }
+    
+    // Create user data while registering
+    private func saveUserData() {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+        
+        let users = db.collection("users").document(uid)
+        
+        users.getDocument { (document, error) in
+            if let document = document, document.exists {
+                if let lastLoginDate = document.get("last_login_date") as? String,
+                   let streakNum = document.get("streak_num") as? Int {
+                    
+                    let todayDate = self.getCurrentDateString()
+                    // If it's the first time user sign in today
+                    if lastLoginDate != todayDate {
+                        users.updateData(["last_login_date": todayDate, "streak_num": streakNum + 1]) { error in
+                            if let error = error {
+                                print("Error updating user login date and streak_num: \(error.localizedDescription)")
+                            } else {
+                                print("User login date updated for today and streak_num increased")
+                            }
+                        }
+                    }
+                }
+                
+                users.updateData([
+                    "last_login_date": self.getCurrentDateString()
+                ]) { error in
+                    if let error = error {
+                        print("Error updating user login date: \(error.localizedDescription)")
+                    } else {
+                        print("User login date updated for today!")
+                    }
+                }
+            } else {
+                let userData: [String: Any] = [
+                    "id": uid,
+                    "streak_num": 1,
+                    "favorites": [],
+                    "last_login_date": self.getCurrentDateString(),
+                    "scrapbooks" : []
+                ]
+                
+                users.setData(userData) { error in
+                    if let error = error {
+                        print("Error saving user data: \(error.localizedDescription)")
+                    } else {
+                        print("User data saved successfully!")
+                    }
+                }
+            }
+        }
+    }
+
+    // Helper function to get the current date ("yyyy-mm-dd")
+    private func getCurrentDateString() -> String {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-mm-dd"
+        return dateFormatter.string(from: Date())
     }
     
     // Show error messages
