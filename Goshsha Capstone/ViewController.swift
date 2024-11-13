@@ -71,6 +71,10 @@ class ViewController: UIViewController {
         let loginLogoutButton = UIBarButtonItem(image: UIImage(systemName: "door.right.hand.open"), style: .plain, target: self, action: #selector(loginLogoutTapped))
         loginLogoutButton.tintColor = .blue
         
+        // Create streak button with an icon
+        let streakButton = UIBarButtonItem(image: UIImage(systemName: "flame"), style: .plain, target: self, action: #selector(streakButtonTapped))
+        streakButton.tintColor = .blue
+        
         // Check if the user is logged in or not and update the icon accordingly
         if Auth.auth().currentUser != nil {
             // User is logged in, set to logout icon
@@ -82,7 +86,7 @@ class ViewController: UIViewController {
         
         // Set the buttons on the toolbar
         let flexibleSpace = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
-        bottomToolbar.setItems([scrapBookButton, flexibleSpace, loginLogoutButton], animated: false)
+        bottomToolbar.setItems([scrapBookButton, flexibleSpace, streakButton, flexibleSpace, loginLogoutButton], animated: false)
         
     }
      
@@ -97,6 +101,19 @@ class ViewController: UIViewController {
         }
      }
     
+    @objc func streakButtonTapped() {
+        if Auth.auth().currentUser == nil {
+            // User is not logged in, segue to LoginController
+            segueToLoginController()
+        } else {
+            // User is logged in, pop out Streak page
+            let storyboard = UIStoryboard(name: "Main", bundle: nil)
+            if let streakController = storyboard.instantiateViewController(withIdentifier: "StreakController") as? StreakController {
+                streakController.modalPresentationStyle = .overCurrentContext
+                present(streakController, animated: true, completion: nil)
+            }
+        }
+     }
     
     func segueToScrapBookVC() {
         let storyboard = UIStoryboard(name: "ScrapBook", bundle: nil)

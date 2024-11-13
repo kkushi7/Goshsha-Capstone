@@ -117,15 +117,14 @@ class LoginController: UIViewController {
         
         users.getDocument { (document, error) in
             if let document = document, document.exists {
-                if let lastLoginDate = document.get("last_login_date") as? String,
-                   let streakNum = document.get("streak_num") as? Int {
+                if let lastLoginDate = document.get("last_login_date") as? String{
                     
                     let todayDate = self.getCurrentDateString()
                     // If it's the first time user sign in today
                     if lastLoginDate != todayDate {
-                        users.updateData(["last_login_date": todayDate, "streak_num": streakNum + 1]) { error in
+                        users.updateData(["last_login_date": todayDate, "streak_status": false]) { error in
                             if let error = error {
-                                print("Error updating user login date and streak_num: \(error.localizedDescription)")
+                                print("Error updating user login date: \(error.localizedDescription)")
                             } else {
                                 print("User login date updated for today and streak_num increased")
                             }
@@ -145,9 +144,10 @@ class LoginController: UIViewController {
             } else {
                 let userData: [String: Any] = [
                     "id": uid,
-                    "streak_num": 1,
+                    "streak_num": 0,
                     "favorites": [],
                     "last_login_date": self.getCurrentDateString(),
+                    "streak_status": false,
                     "scrapbooks" : []
                 ]
                 
@@ -162,10 +162,10 @@ class LoginController: UIViewController {
         }
     }
 
-    // Helper function to get the current date ("yyyy-mm-dd")
+    // Helper function to get the current date ("yyyy-MM-dd")
     private func getCurrentDateString() -> String {
         let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-mm-dd"
+        dateFormatter.dateFormat = "yyyy-MM-dd"
         return dateFormatter.string(from: Date())
     }
     
