@@ -116,8 +116,8 @@ class ViewController: UIViewController {
      }
     
     func segueToScrapBookVC() {
-        let storyboard = UIStoryboard(name: "ScrapBook", bundle: nil)
-             if let scrapBookController = storyboard.instantiateViewController(withIdentifier: "ScrapBookController") as? ScrapBookViewController {
+        let storyboard = UIStoryboard(name: "Main", bundle: nil)
+             if let scrapBookController = storyboard.instantiateViewController(withIdentifier: "ScrapBookViewController") as? ScrapBookViewController {
                  scrapBookController.modalPresentationStyle = .fullScreen // Optional: set presentation style
                  present(scrapBookController, animated: true, completion: nil)
              }
