@@ -148,7 +148,7 @@ class LoginController: UIViewController {
                     "favorites": [],
                     "last_login_date": self.getCurrentDateString(),
                     "streak_status": false,
-                    "scrapbooks" : []
+                    "scrapbooks" : ["texts" : [], "photos" : [], "stickers" : []]
                 ]
                 
                 users.setData(userData) { error in
