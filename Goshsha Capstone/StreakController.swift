@@ -99,7 +99,7 @@ class StreakController: UIViewController {
             if let document = document, document.exists,
                let streakNum = document.get("streak_num") as? Int,
                let streakStatus = document.get("streak_status") as? Bool,
-               let lastLoginDate = document.get("last_streak_date") as? String {
+               let lastStreakDate = document.get("last_streak_date") as? String {
                 
                 let todayDate = self?.getCurrentDateString() ?? ""
                 let yesterdayDate = self?.getYesterdayDateString() ?? ""
@@ -108,7 +108,7 @@ class StreakController: UIViewController {
                 self?.streakLabel.text = "Current Streak: \(streakNum)"
                 
                 //if user didn't increase yesterday or today, reset streak_num
-                if lastLoginDate != yesterdayDate && lastLoginDate != todayDate {
+                if lastStreakDate != yesterdayDate && lastStreakDate != todayDate {
                     users.updateData([
                         "streak_num": 0,
                         "streak_status": false
@@ -125,7 +125,7 @@ class StreakController: UIViewController {
                     self?.incrementButton.setTitle("Increase Streak", for: .normal)
                 } else {
                     // If haven't increase but fulfill the condition
-                    if !streakStatus && (lastLoginDate == yesterdayDate || lastLoginDate == todayDate) {
+                    if !streakStatus && (lastStreakDate == yesterdayDate || lastStreakDate == todayDate) {
                         self?.incrementButton.isEnabled = true
                         self?.incrementButton.setTitle("Increase Streak", for: .normal)
                     } else {
