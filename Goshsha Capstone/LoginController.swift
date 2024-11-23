@@ -117,36 +117,13 @@ class LoginController: UIViewController {
         
         users.getDocument { (document, error) in
             if let document = document, document.exists {
-                if let lastLoginDate = document.get("last_login_date") as? String{
-                    
-                    let todayDate = self.getCurrentDateString()
-                    // If it's the first time user sign in today
-                    if lastLoginDate != todayDate {
-                        users.updateData(["last_login_date": todayDate, "streak_status": false]) { error in
-                            if let error = error {
-                                print("Error updating user login date: \(error.localizedDescription)")
-                            } else {
-                                print("User login date updated for today and streak_num increased")
-                            }
-                        }
-                    }
-                }
-                
-                users.updateData([
-                    "last_login_date": self.getCurrentDateString()
-                ]) { error in
-                    if let error = error {
-                        print("Error updating user login date: \(error.localizedDescription)")
-                    } else {
-                        print("User login date updated for today!")
-                    }
-                }
+                print("User already exists in database.")
             } else {
                 let userData: [String: Any] = [
                     "id": uid,
                     "streak_num": 0,
                     "favorites": [],
-                    "last_login_date": self.getCurrentDateString(),
+                    "last_streak_date": "",
                     "streak_status": false,
                     "scrapbooks" : ["texts" : [], "photos" : [], "stickers" : []]
                 ]

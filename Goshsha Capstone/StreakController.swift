@@ -98,19 +98,46 @@ class StreakController: UIViewController {
             
             if let document = document, document.exists,
                let streakNum = document.get("streak_num") as? Int,
-               let streakStatus = document.get("streak_status") as? Bool {
+               let streakStatus = document.get("streak_status") as? Bool,
+               let lastLoginDate = document.get("last_streak_date") as? String {
+                
+                let todayDate = self?.getCurrentDateString() ?? ""
+                let yesterdayDate = self?.getYesterdayDateString() ?? ""
                 
                 self?.streakNum = streakNum
                 self?.streakLabel.text = "Current Streak: \(streakNum)"
                 
-                if streakStatus {
-                    self?.incrementButton.isEnabled = false
-                    self?.incrementButton.setTitle("Already Signed In Today", for: .disabled)
-                } else {
+                //if user didn't increase yesterday or today, reset streak_num
+                if lastLoginDate != yesterdayDate && lastLoginDate != todayDate {
+                    users.updateData([
+                        "streak_num": 0,
+                        "streak_status": false
+                    ]) { error in
+                        if let error = error {
+                            print("Error resetting streak: \(error.localizedDescription)")
+                        } else {
+                            print("Streak reset due to missed day.")
+                        }
+                    }
+                    self?.streakNum = 0
+                    self?.streakLabel.text = "Current Streak: 0"
                     self?.incrementButton.isEnabled = true
+                    self?.incrementButton.setTitle("Increase Streak", for: .normal)
+                } else {
+                    // If haven't increase but fulfill the condition
+                    if !streakStatus && (lastLoginDate == yesterdayDate || lastLoginDate == todayDate) {
+                        self?.incrementButton.isEnabled = true
+                        self?.incrementButton.setTitle("Increase Streak", for: .normal)
+                    } else {
+                        // If already increase streak
+                        self?.incrementButton.isEnabled = false
+                        self?.incrementButton.setTitle("Already Signed In Today", for: .disabled)
+                    }
+                    self?.streakNum = streakNum
+                    self?.streakLabel.text = "Current Streak: \(streakNum)"
                 }
             } else {
-                print("Streak number or last_login_date not found in database.")
+                print("Streak number or last_streak_date not found in database.")
             }
         }
     }
@@ -121,7 +148,7 @@ class StreakController: UIViewController {
         let users = db.collection("users").document(uid)
         users.updateData([
             "streak_num": streakNum + 1,
-            "last_login_date": getCurrentDateString(),
+            "last_streak_date": getCurrentDateString(),
             "streak_status": true
         ]) { [weak self] error in
             if let error = error {
@@ -141,6 +168,16 @@ class StreakController: UIViewController {
         dateFormatter.dateFormat = "yyyy-MM-dd"
         return dateFormatter.string(from: Date())
     }
+    
+    private func getYesterdayDateString() -> String {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        guard let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: Date()) else {
+            return ""
+        }
+        return dateFormatter.string(from: yesterday)
+    }
+
     
     private func setupDismissGesture() {
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissIfTappedOutside))
