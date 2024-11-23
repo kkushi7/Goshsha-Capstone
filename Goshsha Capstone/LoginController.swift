@@ -125,7 +125,7 @@ class LoginController: UIViewController {
                     "favorites": [],
                     "last_streak_date": "",
                     "streak_status": false,
-                    "scrapbooks" : ["texts" : [], "photos" : [], "stickers" : []]
+                    "scrapbooks" : []
                 ]
                 
                 users.setData(userData) { error in
