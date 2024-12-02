@@ -9,6 +9,7 @@ import UIKit
 import Firebase
 import FirebaseFirestore
 import FirebaseAuth
+import FirebaseStorage
 
 class EditScrapbookViewController: UIViewController, UITextFieldDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate{
     
@@ -121,6 +122,9 @@ class EditScrapbookViewController: UIViewController, UITextFieldDelegate, UIImag
     
     @objc func saveButtonTapped() {
         var texts = [[String: Any]]()
+        var photos = [[String: Any]]()
+        let imageViews = canvasView.subviews.compactMap { $0 as? UIImageView }
+        var uploadTasks = imageViews.count
             
         for subview in canvasView.subviews {
             if let textField = subview as? UITextField, let text = textField.text {
@@ -133,22 +137,71 @@ class EditScrapbookViewController: UIViewController, UITextFieldDelegate, UIImag
                     "color": textField.textColor?.toHexString() ?? "#000000"
                 ]
                 texts.append(textData)
-                print(texts)
+            } else if let imageView = subview as? UIImageView, let image = imageView.image {
+                uploadPhoto(image: image) { [weak self] url in
+                    guard let self = self, let downloadURL = url else { return }
+                    let photoData: [String: Any] = [
+                        "url": downloadURL.absoluteString,
+                        "x": imageView.frame.origin.x,
+                        "y": imageView.frame.origin.y,
+                        "scaleX": imageView.transform.a,
+                        "scaleY": imageView.transform.d,
+                        "rotation": atan2(imageView.transform.b, imageView.transform.a)
+                    ]
+                    photos.append(photoData)
+                    
+                    uploadTasks -= 1;
+                    
+                    if uploadTasks == 0 {
+                        self.saveScrapbookToFirestore(texts: texts, photos: photos)
+                    }
+                }
             }
         }
-
-        let scrapbookData: [String: Any] = [
-            "texts": texts,
-            "photos": [],
-            "stickers": []
-        ]
         
+        if uploadTasks == 0 {
+            saveScrapbookToFirestore(texts: texts, photos: photos)
+        }
+    }
+    
+    func uploadPhoto(image: UIImage, completion: @escaping (URL?) -> Void) {
+        guard let imageData = image.jpegData(compressionQuality: 0.8) else {
+            print("Failed to convert image to data")
+            completion(nil)
+            return
+        }
+        
+        let storageRef = Storage.storage().reference()
+        let photoRef = storageRef.child("scrapbook_photos/\(UUID().uuidString).jpg")
+        
+        photoRef.putData(imageData, metadata: nil) { metadata, error in
+            if let error = error {
+                print("Error uploading photo: \(error.localizedDescription)")
+                completion(nil)
+            } else {
+                photoRef.downloadURL { url, error in
+                    if let error = error {
+                        print("Error fetching download URL: \(error.localizedDescription)")
+                        completion(nil)
+                    } else {
+                        completion(url)
+                    }
+                }
+            }
+        }
+    }
+
+    
+    func saveScrapbookToFirestore(texts: [[String: Any]], photos: [[String : Any]]) {
         guard let uid = Auth.auth().currentUser?.uid else { return }
         
+        let scrapbookData: [String: Any] = [
+            "texts": texts,
+            "photos": photos,
+        ]
+        
         let userDoc = db.collection("users").document(uid)
-        userDoc.updateData([
-            "scrapbooks": scrapbookData
-        ]) { error in
+        userDoc.setData(["scrapbooks": scrapbookData], merge: true) { error in
             if let error = error {
                 print("Error saving scrapbook: \(error.localizedDescription)")
             } else {
@@ -156,6 +209,7 @@ class EditScrapbookViewController: UIViewController, UITextFieldDelegate, UIImag
             }
         }
     }
+
     
     @objc func exportButtonTapped() {
         print("Export button tapped")
