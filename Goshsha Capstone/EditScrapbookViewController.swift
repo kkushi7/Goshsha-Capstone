@@ -138,7 +138,6 @@ class EditScrapbookViewController: UIViewController, UITextFieldDelegate, UIImag
         }
 
         let scrapbookData: [String: Any] = [
-            "user_scrapbook_id": UUID().uuidString, // generate scrapbook ID
             "texts": texts,
             "photos": [],
             "stickers": []
@@ -148,7 +147,7 @@ class EditScrapbookViewController: UIViewController, UITextFieldDelegate, UIImag
         
         let userDoc = db.collection("users").document(uid)
         userDoc.updateData([
-            "scrapbooks": FieldValue.arrayUnion([scrapbookData])
+            "scrapbooks": scrapbookData
         ]) { error in
             if let error = error {
                 print("Error saving scrapbook: \(error.localizedDescription)")
