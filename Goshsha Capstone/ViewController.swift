@@ -116,11 +116,16 @@ class ViewController: UIViewController {
      }
     
     func segueToScrapBookVC() {
+        /*
         let storyboard = UIStoryboard(name: "Main", bundle: nil)
              if let scrapBookController = storyboard.instantiateViewController(withIdentifier: "ScrapBookViewController") as? ScrapBookViewController {
                  scrapBookController.modalPresentationStyle = .fullScreen // Optional: set presentation style
                  present(scrapBookController, animated: true, completion: nil)
              }
+        */
+        let editScrapbookVC = EditScrapbookViewController()
+        editScrapbookVC.modalPresentationStyle = .fullScreen
+        present(editScrapbookVC, animated: true, completion: nil)
     }
     
     func segueToLoginController() {
