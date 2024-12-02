@@ -87,12 +87,8 @@ class EditScrapbookViewController: UIViewController, UITextFieldDelegate, UIImag
             let photoButton = UIBarButtonItem(image: UIImage(systemName: "photo.on.rectangle.angled"), style: .plain, target: self, action: #selector(addPhoto))
             photoButton.tintColor = .blue
             
-            // "Sticker" button
-            let stickerButton = UIBarButtonItem(image: UIImage(systemName: "face.smiling"), style: .plain, target: self, action: #selector(addSticker))
-            stickerButton.tintColor = .blue
-            
             let flexibleSpace = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
-            topToolbar.setItems([textButton, flexibleSpace, photoButton, flexibleSpace, stickerButton], animated: false)
+            topToolbar.setItems([flexibleSpace, textButton, flexibleSpace, photoButton, flexibleSpace], animated: false)
     }
     
     func setupBottomToolbar() {
@@ -455,12 +451,6 @@ class EditScrapbookViewController: UIViewController, UITextFieldDelegate, UIImag
             canvasView.addSubview(imageView)
         }
         picker.dismiss(animated: true, completion: nil)
-    }
-
-    
-    // add stickers
-    @objc func addSticker() {
-        print("Add Sticker tapped")
     }
     
     // quit text editing mode
