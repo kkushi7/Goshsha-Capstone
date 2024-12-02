@@ -173,6 +173,7 @@ class EditScrapbookViewController: UIViewController, UITextFieldDelegate, UIImag
             textField.textAlignment = .center
             textField.frame = CGRect(x: x, y: y, width: 200, height: 40)
             textField.isUserInteractionEnabled = true
+            textField.accessibilityIdentifier = textData["id"] as? String ?? UUID().uuidString
 
             let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
             textField.addGestureRecognizer(panGesture)
@@ -215,6 +216,7 @@ class EditScrapbookViewController: UIViewController, UITextFieldDelegate, UIImag
                     imageView.transform = CGAffineTransform.identity
                         .scaledBy(x: scaleX, y: scaleY)
                         .rotated(by: rotation)
+                    imageView.accessibilityIdentifier = photo["id"] as? String ?? UUID().uuidString
                     
                     let panGesture = UIPanGestureRecognizer(target: self, action: #selector(self.handlePanGesture(_:)))
                     imageView.addGestureRecognizer(panGesture)
@@ -247,6 +249,7 @@ class EditScrapbookViewController: UIViewController, UITextFieldDelegate, UIImag
         for subview in canvasView.subviews {
             if let textField = subview as? UITextField, let text = textField.text {
                 let textData: [String: Any] = [
+                    "id": textField.accessibilityIdentifier ?? UUID().uuidString,
                     "content": text,
                     "x": textField.frame.origin.x,
                     "y": textField.frame.origin.y,
@@ -259,6 +262,7 @@ class EditScrapbookViewController: UIViewController, UITextFieldDelegate, UIImag
                 uploadPhoto(image: image) { [weak self] url in
                     guard let self = self, let downloadURL = url else { return }
                     let photoData: [String: Any] = [
+                        "id": imageView.accessibilityIdentifier ?? UUID().uuidString,
                         "url": downloadURL.absoluteString,
                         "x": imageView.frame.origin.x,
                         "y": imageView.frame.origin.y,
@@ -472,9 +476,86 @@ class EditScrapbookViewController: UIViewController, UITextFieldDelegate, UIImag
     }
 
     @objc func handleDeleteButton(_ sender: UIButton) {
-        sender.superview?.removeFromSuperview()
+        guard let targetView = sender.superview else { return }
+            
+        // get targetview identifier
+        guard let identifier = targetView.accessibilityIdentifier else {
+            print("No identifier found for view")
+            targetView.removeFromSuperview()
+            return
+        }
+        
+        // delete targetview
+        targetView.removeFromSuperview()
+        
+        // delete data from database
+        removeFromDatabase(withIdentifier: identifier)
     }
+    
+    func removeFromDatabase(withIdentifier identifier: String) {
+        guard let uid = Auth.auth().currentUser?.uid else {
+            print("User not authenticated")
+            return
+        }
+
+        let userDoc = db.collection("users").document(uid)
+        
+        userDoc.getDocument { [weak self] (document, error) in
+            guard let self = self else { return }
+
+            if let error = error {
+                print("Error fetching scrapbook: \(error.localizedDescription)")
+                return
+            }
+
+            if let document = document, let data = document.data(),
+               var scrapbook = data["scrapbooks"] as? [String: Any] {
+                
+                var texts = scrapbook["texts"] as? [[String: Any]] ?? []
+                var photos = scrapbook["photos"] as? [[String: Any]] ?? []
+                
+                // delete targetview from text or photo
+                texts.removeAll { $0["id"] as? String == identifier }
+                
+                if let photoToRemove = photos.first(where: { $0["id"] as? String == identifier }) {
+                    if let urlString = photoToRemove["url"] as? String,
+                       let url = URL(string: urlString) {
+                        self.deletePhotoFromStorage(url: url)
+                    }
+                    photos.removeAll { $0["id"] as? String == identifier }
+                }
+                
+                scrapbook["texts"] = texts
+                scrapbook["photos"] = photos
+                
+                // update database
+                userDoc.setData(["scrapbooks": scrapbook], merge: true) { error in
+                    if let error = error {
+                        print("Error updating scrapbook: \(error.localizedDescription)")
+                    } else {
+                        print("Element with identifier \(identifier) removed successfully!")
+                    }
+                }
+            } else {
+                print("No scrapbook data found for user")
+            }
+        }
+    }
+    
+    func deletePhotoFromStorage(url: URL) {
+        let storageRef = Storage.storage().reference(forURL: url.absoluteString)
+        storageRef.delete { error in
+            if let error = error {
+                print("Error deleting photo from storage: \(error.localizedDescription)")
+            } else {
+                print("Photo deleted from storage successfully!")
+            }
+        }
+    }
+
 }
+
+
 
 extension UIColor {
     convenience init?(hexString: String) {
