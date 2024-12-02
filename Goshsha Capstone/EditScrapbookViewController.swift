@@ -48,7 +48,7 @@ class EditScrapbookViewController: UIViewController, UITextFieldDelegate, UIImag
     
     func showScrapBookNameLabel() {
         let label = UILabel()
-        label.text = "Your SCRAPBOOK"
+        label.text = "YOUR SCRAPBOOK"
         label.textAlignment = .center
         label.font = UIFont(name: "Helvetica-Bold", size: 34)
         label.textColor = .black
@@ -182,6 +182,9 @@ class EditScrapbookViewController: UIViewController, UITextFieldDelegate, UIImag
         let rotationGesture = UIRotationGestureRecognizer(target: self, action: #selector(handleRotationGesture(_:)))
         textField.addGestureRecognizer(rotationGesture)
         
+        let longPressGesture = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPressGesture(_:)))
+            textField.addGestureRecognizer(longPressGesture)
+        
         canvasView.addSubview(textField)
     }
     
@@ -212,6 +215,9 @@ class EditScrapbookViewController: UIViewController, UITextFieldDelegate, UIImag
             let rotationGesture = UIRotationGestureRecognizer(target: self, action: #selector(handleRotationGesture(_:)))
             imageView.addGestureRecognizer(rotationGesture)
             
+            let longPressGesture = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPressGesture(_:)))
+            imageView.addGestureRecognizer(longPressGesture)
+            
             canvasView.addSubview(imageView)
         }
         picker.dismiss(animated: true, completion: nil)
@@ -226,6 +232,17 @@ class EditScrapbookViewController: UIViewController, UITextFieldDelegate, UIImag
     // quit text editing mode
     @objc func handleTapOutside(_ gesture: UITapGestureRecognizer) {
         view.endEditing(true)
+        
+        for subview in canvasView.subviews {
+                // check for delete buttons by their unique tag
+                if let deleteButton = subview.viewWithTag(999) {
+                    UIView.animate(withDuration: 0.3) {
+                        deleteButton.alpha = 0
+                    } completion: { _ in
+                        deleteButton.removeFromSuperview()
+                    }
+                }
+            }
     }
     
     // gesture functions
@@ -249,6 +266,42 @@ class EditScrapbookViewController: UIViewController, UITextFieldDelegate, UIImag
             view.transform = view.transform.rotated(by: gesture.rotation)
             gesture.rotation = 0
         }
+    }
+    
+    @objc func handleLongPressGesture(_ gesture: UILongPressGestureRecognizer) {
+        guard let targetView = gesture.view else { return }
+
+        if gesture.state == .began {
+            addDeleteButton(to: targetView)
+        }
+    }
+    
+    func addDeleteButton(to view: UIView) {
+        if view.viewWithTag(999) != nil { return }
+        
+        let deleteButton = UIButton(type: .custom)
+        deleteButton.setTitle("X", for: .normal)
+        deleteButton.setTitleColor(.white, for: .normal)
+        deleteButton.backgroundColor = .red
+        deleteButton.layer.cornerRadius = 10
+        deleteButton.clipsToBounds = true
+        let buttonSize: CGFloat = 24 // Size of the delete button
+        let padding: CGFloat = 5
+        deleteButton.frame = CGRect(
+                x: view.bounds.width - buttonSize - padding,
+                y: padding,
+                width: buttonSize,
+                height: buttonSize
+            )
+        
+        deleteButton.tag = 999
+        deleteButton.addTarget(self, action: #selector(handleDeleteButton(_:)), for: .touchUpInside)
+
+        view.addSubview(deleteButton)
+    }
+
+    @objc func handleDeleteButton(_ sender: UIButton) {
+        sender.superview?.removeFromSuperview()
     }
 }
 
