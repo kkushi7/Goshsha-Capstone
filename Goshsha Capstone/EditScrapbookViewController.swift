@@ -37,7 +37,7 @@ class EditScrapbookViewController: UIViewController, UITextFieldDelegate, UIImag
         setupTopToolbar()
         
         //load scrapbook from database
-        //loadScrapbookData()
+        loadScrapbookData()
         
         //set Scarpbook canvas
         canvasView  = setupCanvas(below: topToolbar)
@@ -116,6 +116,124 @@ class EditScrapbookViewController: UIViewController, UITextFieldDelegate, UIImag
             bottomToolbar.setItems([backButton, flexibleSpace, saveButton, flexibleSpace, exportButton], animated: false)
         }
         
+    func loadScrapbookData() {
+        guard let uid = Auth.auth().currentUser?.uid else {
+            print("User not authenticated")
+            return
+        }
+
+        let userDoc = db.collection("users").document(uid)
+        
+        userDoc.getDocument { [weak self] (document, error) in
+            guard let self = self else { return }
+
+            if let error = error {
+                print("Error fetching scrapbook: \(error.localizedDescription)")
+                return
+            }
+
+            if let document = document, let data = document.data(),
+               let scrapbook = data["scrapbooks"] as? [String: Any] {
+                
+                //print("Scrapbook data loaded: \(scrapbook)")
+                
+                // load text
+                if let texts = scrapbook["texts"] as? [[String: Any]] {
+                    self.loadTextFields(from: texts)
+                }
+
+                // load photo
+                if let photos = scrapbook["photos"] as? [[String: Any]] {
+                    self.loadPhotos(from: photos)
+                }
+            } else {
+                print("No scrapbook data found for user")
+            }
+        }
+    }
+
+    func loadTextFields(from texts: [[String: Any]]) {
+        for textData in texts {
+            guard let content = textData["content"] as? String,
+                  let x = textData["x"] as? CGFloat,
+                  let y = textData["y"] as? CGFloat,
+                  let fontSize = textData["fontSize"] as? CGFloat,
+                  let fontName = textData["fontName"] as? String,
+                  let colorHex = textData["color"] as? String,
+                  let color = UIColor(hexString: colorHex) else {
+                print("Invalid text data: \(textData)")
+                continue
+            }
+
+            let textField = UITextField()
+            textField.text = content
+            textField.textColor = color
+            textField.font = UIFont(name: fontName, size: fontSize)
+            textField.backgroundColor = .clear
+            textField.textAlignment = .center
+            textField.frame = CGRect(x: x, y: y, width: 200, height: 40)
+            textField.isUserInteractionEnabled = true
+
+            let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
+            textField.addGestureRecognizer(panGesture)
+
+            let pinchGesture = UIPinchGestureRecognizer(target: self, action: #selector(handlePinchGesture(_:)))
+            textField.addGestureRecognizer(pinchGesture)
+
+            let rotationGesture = UIRotationGestureRecognizer(target: self, action: #selector(handleRotationGesture(_:)))
+            textField.addGestureRecognizer(rotationGesture)
+
+            let longPressGesture = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPressGesture(_:)))
+            textField.addGestureRecognizer(longPressGesture)
+
+            canvasView.addSubview(textField)
+        }
+    }
+
+    func loadPhotos(from photoData: [[String: Any]]) {
+        for photo in photoData {
+            guard let urlString = photo["url"] as? String,
+                  let url = URL(string: urlString),
+                  let x = photo["x"] as? CGFloat,
+                  let y = photo["y"] as? CGFloat,
+                  let scaleX = photo["scaleX"] as? CGFloat,
+                  let scaleY = photo["scaleY"] as? CGFloat,
+                  let rotation = photo["rotation"] as? CGFloat else {
+                print("Invalid photo data: \(photo)")
+                continue
+            }
+
+            URLSession.shared.dataTask(with: url) { [weak self] data, _, error in
+                guard let self = self, let data = data, error == nil,
+                      let image = UIImage(data: data) else { return }
+
+                DispatchQueue.main.async {
+                    let imageView = UIImageView(image: image)
+                    imageView.isUserInteractionEnabled = true
+                    imageView.contentMode = .scaleAspectFit
+                    imageView.frame = CGRect(x: x, y: y, width: 200, height: 200)
+                    imageView.transform = CGAffineTransform.identity
+                        .scaledBy(x: scaleX, y: scaleY)
+                        .rotated(by: rotation)
+                    
+                    let panGesture = UIPanGestureRecognizer(target: self, action: #selector(self.handlePanGesture(_:)))
+                    imageView.addGestureRecognizer(panGesture)
+
+                    let pinchGesture = UIPinchGestureRecognizer(target: self, action: #selector(self.handlePinchGesture(_:)))
+                    imageView.addGestureRecognizer(pinchGesture)
+
+                    let rotationGesture = UIRotationGestureRecognizer(target: self, action: #selector(self.handleRotationGesture(_:)))
+                    imageView.addGestureRecognizer(rotationGesture)
+
+                    let longPressGesture = UILongPressGestureRecognizer(target: self, action: #selector(self.handleLongPressGesture(_:)))
+                    imageView.addGestureRecognizer(longPressGesture)
+                    
+                    self.canvasView.addSubview(imageView)
+                }
+            }.resume()
+        }
+    }
+    
     @objc func backButtonTapped() {
         dismiss(animated: true, completion: nil)
     }
