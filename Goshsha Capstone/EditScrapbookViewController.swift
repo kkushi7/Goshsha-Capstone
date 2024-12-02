@@ -10,6 +10,7 @@ import Firebase
 import FirebaseFirestore
 import FirebaseAuth
 import FirebaseStorage
+import Photos
 
 class EditScrapbookViewController: UIViewController, UITextFieldDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate{
     
@@ -378,9 +379,21 @@ class EditScrapbookViewController: UIViewController, UITextFieldDelegate, UIImag
         }
     }
 
+    func renderViewAsImage(view: UIView) -> UIImage? {
+        let renderer = UIGraphicsImageRenderer(size: canvasView.bounds.size)
+        return renderer.image { context in
+            canvasView.layer.render(in: context.cgContext)
+        }
+    }
     
     @objc func exportButtonTapped() {
-        print("Export button tapped")
+        guard let image = renderViewAsImage(view: canvasView) else {
+            print("Error rendering view as image")
+            return
+        }
+        
+        UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
+        print("Image saved to photo library")
     }
 
     
