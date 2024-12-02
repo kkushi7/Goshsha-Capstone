@@ -241,11 +241,44 @@ class EditScrapbookViewController: UIViewController, UITextFieldDelegate, UIImag
     }
     
     @objc func saveButtonTapped() {
+        guard let uid = Auth.auth().currentUser?.uid else {
+            print("User not authenticated")
+            return
+        }
+
+        let userDoc = db.collection("users").document(uid)
+        
+        // delete original photo
+        userDoc.getDocument { [weak self] (document, error) in
+            guard let self = self else { return }
+
+            if let error = error {
+                print("Error fetching scrapbook: \(error.localizedDescription)")
+                return
+            }
+
+            if let document = document, let data = document.data(),
+               let scrapbook = data["scrapbooks"] as? [String: Any],
+               let photos = scrapbook["photos"] as? [[String: Any]] {
+
+                for photo in photos {
+                    if let urlString = photo["url"] as? String,
+                       let url = URL(string: urlString) {
+                        self.deletePhotoFromStorage(url: url)
+                    }
+                }
+            }
+            
+            self.uploadNewDataToFirestore()
+        }
+    }
+
+    func uploadNewDataToFirestore() {
         var texts = [[String: Any]]()
         var photos = [[String: Any]]()
         let imageViews = canvasView.subviews.compactMap { $0 as? UIImageView }
         var uploadTasks = imageViews.count
-            
+        
         for subview in canvasView.subviews {
             if let textField = subview as? UITextField, let text = textField.text {
                 let textData: [String: Any] = [
@@ -272,7 +305,7 @@ class EditScrapbookViewController: UIViewController, UITextFieldDelegate, UIImag
                     ]
                     photos.append(photoData)
                     
-                    uploadTasks -= 1;
+                    uploadTasks -= 1
                     
                     if uploadTasks == 0 {
                         self.saveScrapbookToFirestore(texts: texts, photos: photos)
@@ -285,6 +318,7 @@ class EditScrapbookViewController: UIViewController, UITextFieldDelegate, UIImag
             saveScrapbookToFirestore(texts: texts, photos: photos)
         }
     }
+
     
     func uploadPhoto(image: UIImage, completion: @escaping (URL?) -> Void) {
         guard let imageData = image.jpegData(compressionQuality: 0.8) else {
