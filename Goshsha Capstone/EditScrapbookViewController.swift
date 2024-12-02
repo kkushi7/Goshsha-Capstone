@@ -17,6 +17,9 @@ class EditScrapbookViewController: UIViewController, UITextFieldDelegate, UIImag
     var canvasView: UIView!
     var bottomToolbar: UIToolbar!
     var currentFont: UIFont = UIFont.systemFont(ofSize: 18)
+    var textsToDelete: [String] = []
+    var photosToDelete: [String] = []
+
     
     let db = Firestore.firestore();
     
@@ -248,28 +251,37 @@ class EditScrapbookViewController: UIViewController, UITextFieldDelegate, UIImag
 
         let userDoc = db.collection("users").document(uid)
         
+        // delete what should be deleted first, then update rest data
+        var deleteTasks = photosToDelete.count
+        for photoID in photosToDelete {
+            removeFromDatabase(withIdentifier: photoID)
+            deleteTasks -= 1
+        }
+        
         // delete original photo
-        userDoc.getDocument { [weak self] (document, error) in
-            guard let self = self else { return }
+        if deleteTasks == 0 {
+            userDoc.getDocument { [weak self] (document, error) in
+                guard let self = self else { return }
 
-            if let error = error {
-                print("Error fetching scrapbook: \(error.localizedDescription)")
-                return
-            }
+                if let error = error {
+                    print("Error fetching scrapbook: \(error.localizedDescription)")
+                    return
+                }
 
-            if let document = document, let data = document.data(),
-               let scrapbook = data["scrapbooks"] as? [String: Any],
-               let photos = scrapbook["photos"] as? [[String: Any]] {
+                if let document = document, let data = document.data(),
+                   let scrapbook = data["scrapbooks"] as? [String: Any],
+                   let photos = scrapbook["photos"] as? [[String: Any]] {
 
-                for photo in photos {
-                    if let urlString = photo["url"] as? String,
-                       let url = URL(string: urlString) {
-                        self.deletePhotoFromStorage(url: url)
+                    for photo in photos {
+                        if let urlString = photo["url"] as? String,
+                           let url = URL(string: urlString) {
+                            self.deletePhotoFromStorage(url: url)
+                        }
                     }
                 }
+                
+                self.uploadNewDataToFirestore()
             }
-            
-            self.uploadNewDataToFirestore()
         }
     }
 
@@ -523,7 +535,11 @@ class EditScrapbookViewController: UIViewController, UITextFieldDelegate, UIImag
         targetView.removeFromSuperview()
         
         // delete data from database
-        removeFromDatabase(withIdentifier: identifier)
+        if targetView is UITextField {
+            textsToDelete.append(identifier)
+        } else if targetView is UIImageView {
+            photosToDelete.append(identifier)
+        }
     }
     
     func removeFromDatabase(withIdentifier identifier: String) {
