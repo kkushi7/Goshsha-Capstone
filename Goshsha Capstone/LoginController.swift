@@ -4,14 +4,13 @@
 //
 //  Created by Dingxin Tao on 11/13/24.
 //
-
 import UIKit
 import FirebaseAuth
 import FirebaseFirestore
-
 class LoginController: UIViewController {
     
     let db = Firestore.firestore();
+    var backButtonToolbar: UIToolbar!
     
     // UI for email and password input
     private let emailTextField: UITextField = {
@@ -43,6 +42,8 @@ class LoginController: UIViewController {
         
         view.backgroundColor = .white
         setupLayout()
+        setupbackButtonToolbar()
+        backButtonToolbar.barTintColor = .white
     }
     
     private func setupLayout() {
@@ -66,6 +67,31 @@ class LoginController: UIViewController {
             signInButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             signInButton.topAnchor.constraint(equalTo: passwordTextField.bottomAnchor, constant: 20)
         ])
+    }
+    
+    private func setupbackButtonToolbar() {
+        backButtonToolbar = UIToolbar()
+        backButtonToolbar.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(backButtonToolbar)
+        
+        NSLayoutConstraint.activate([
+            backButtonToolbar.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: -65),
+            backButtonToolbar.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            backButtonToolbar.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            backButtonToolbar.heightAnchor.constraint(equalToConstant: 100)
+        ])
+        
+        // "back" button
+        let backButton = UIBarButtonItem(image: UIImage(systemName: "arrow.backward"), style: .plain, target: self, action: #selector(backButtonTapped))
+        backButton.tintColor = .blue
+        
+        
+        let flexibleSpace = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
+        backButtonToolbar.setItems([backButton], animated: false)
+    }
+    
+    @objc private func backButtonTapped() {
+        dismiss(animated: true, completion: nil)
     }
     
     @objc private func signInTapped() {
@@ -138,7 +164,6 @@ class LoginController: UIViewController {
             }
         }
     }
-
     // Helper function to get the current date ("yyyy-MM-dd")
     private func getCurrentDateString() -> String {
         let dateFormatter = DateFormatter()
