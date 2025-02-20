@@ -114,6 +114,9 @@ class EditScrapbookViewController: UIViewController, UITextFieldDelegate, UIImag
             
             let flexibleSpace = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
             bottomToolbar.setItems([backButton, flexibleSpace, saveButton, flexibleSpace, exportButton], animated: false)
+            
+            let shadeMatchButton = UIBarButtonItem(image: UIImage(systemName: "play.circle"), style: .plain, target: self, action: #selector(shadeButtonTapped))
+            shadeButton.tintColor = .blue
         }
         
     func loadScrapbookData() {
