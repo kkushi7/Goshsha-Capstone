@@ -41,7 +41,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		A0FCAEFE2CD18F660046CF0B /* Exceptions for "Goshsha Capstone" folder in "Goshsha Capstone" target */ = {
+		9ED328F22D54459500ECA1FA /* Exceptions for "Goshsha Capstone" folder in "Goshsha Capstone" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -54,7 +54,7 @@
 		A02164C42CD069C800711FD3 /* Goshsha Capstone */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				A0FCAEFE2CD18F660046CF0B /* Exceptions for "Goshsha Capstone" folder in "Goshsha Capstone" target */,
+				9ED328F22D54459500ECA1FA /* Exceptions for "Goshsha Capstone" folder in "Goshsha Capstone" target */,
 			);
 			path = "Goshsha Capstone";
 			sourceTree = "<group>";
@@ -441,10 +441,10 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"Goshsha Capstone/Preview Content\"";
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = A25J225WAC;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = "/Users/taodingxin/Desktop/Goshsha_Capstone/Goshsha Capstone/Info.plist";
+				INFOPLIST_FILE = "/Users/amberchang/Desktop/projects/inf191/Goshsha-Capstone/Goshsha Capstone/Info.plist";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -475,10 +475,10 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"Goshsha Capstone/Preview Content\"";
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = A25J225WAC;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = "/Users/taodingxin/Desktop/Goshsha_Capstone/Goshsha Capstone/Info.plist";
+				INFOPLIST_FILE = "/Users/amberchang/Desktop/projects/inf191/Goshsha-Capstone/Goshsha Capstone/Info.plist";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
