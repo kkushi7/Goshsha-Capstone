@@ -75,6 +75,10 @@ class ViewController: UIViewController {
         let streakButton = UIBarButtonItem(image: UIImage(systemName: "flame"), style: .plain, target: self, action: #selector(streakButtonTapped))
         streakButton.tintColor = .blue
         
+        // Create try-on button with an icon
+        let tryonButton = UIBarButtonItem(image: UIImage(systemName: "person.circle"), style: .plain, target: self, action: #selector(tryOnButtonTapped))
+        tryonButton.tintColor = .blue
+        
         // Check if the user is logged in or not and update the icon accordingly
         if Auth.auth().currentUser != nil {
             // User is logged in, set to logout icon
@@ -86,8 +90,17 @@ class ViewController: UIViewController {
         
         // Set the buttons on the toolbar
         let flexibleSpace = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
-        bottomToolbar.setItems([scrapBookButton, flexibleSpace, streakButton, flexibleSpace, loginLogoutButton], animated: false)
+        bottomToolbar.setItems([scrapBookButton, flexibleSpace, streakButton, flexibleSpace, tryonButton, flexibleSpace, loginLogoutButton], animated: false)
         
+    }
+    
+    @objc func tryOnButtonTapped() {
+        if Auth.auth().currentUser == nil {
+            // User is not logged in, segue to LoginController
+            segueToLoginController()
+        } else {
+            segueToTryonVC();
+        }
     }
      
     // Function to handle when the scarpbookButton is tapped
@@ -114,6 +127,15 @@ class ViewController: UIViewController {
             }
         }
      }
+    
+    func segueToTryonVC() {
+        let storyboard = UIStoryboard(name: "Main", bundle: nil)
+        if let tryonController = storyboard.instantiateViewController(withIdentifier: "TryOnWebViewController") as? TryOnWebViewController {
+            let navigationController = UINavigationController(rootViewController: tryonController)
+            navigationController.modalPresentationStyle = .fullScreen
+            present(navigationController, animated: true, completion: nil)
+        }
+    }
     
     func segueToScrapBookVC() {
         let storyboard = UIStoryboard(name: "Main", bundle: nil)

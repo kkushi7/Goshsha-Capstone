@@ -20,7 +20,7 @@ class EditScrapbookViewController: UIViewController, UITextFieldDelegate, UIImag
     var currentFont: UIFont = UIFont.systemFont(ofSize: 18)
     var textsToDelete: [String] = []
     var photosToDelete: [String] = []
-
+    var isShadeMatching: Bool = false
     
     let db = Firestore.firestore();
     
@@ -87,8 +87,16 @@ class EditScrapbookViewController: UIViewController, UITextFieldDelegate, UIImag
             let photoButton = UIBarButtonItem(image: UIImage(systemName: "photo.on.rectangle.angled"), style: .plain, target: self, action: #selector(addPhoto))
             photoButton.tintColor = .blue
             
+            // shade matches
+            let shadeButton = UIBarButtonItem(image: UIImage(systemName: "play.circle"), style: .plain, target: self, action: #selector(shadeButtonTapped))
+            shadeButton.tintColor = .blue
+            
+//            // color picker button
+//            let colorPickerButton = UIBarButtonItem(image: UIImage(systemName: "eyedropper"), style: .plain, target: self, action: #selector(colorPickerTapped))
+//            colorPickerButton.tintColor = .blue
+        
             let flexibleSpace = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
-            topToolbar.setItems([flexibleSpace, textButton, flexibleSpace, photoButton, flexibleSpace], animated: false)
+            topToolbar.setItems([flexibleSpace, textButton, flexibleSpace, photoButton, flexibleSpace, shadeButton, flexibleSpace], animated: false)
     }
     
     func setupBottomToolbar() {
@@ -118,7 +126,7 @@ class EditScrapbookViewController: UIViewController, UITextFieldDelegate, UIImag
             let shadeMatchButton = UIBarButtonItem(image: UIImage(systemName: "play.circle"), style: .plain, target: self, action: #selector(shadeButtonTapped))
             shadeButton.tintColor = .blue
         }
-        
+    
     func loadScrapbookData() {
         guard let uid = Auth.auth().currentUser?.uid else {
             print("User not authenticated")
@@ -394,6 +402,17 @@ class EditScrapbookViewController: UIViewController, UITextFieldDelegate, UIImag
         UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
         print("Image saved to photo library")
     }
+    
+    // shade match
+    @objc func shadeButtonTapped() {
+//        print("test shade matching")
+//        isShadeMatching = true
+//        let imagePicker = UIImagePickerController()
+//        imagePicker.sourceType = .photoLibrary
+//        imagePicker.delegate = self
+//        present(imagePicker, animated: true, completion: nil)
+        processImageWithGoogleLens()
+    }
 
     
     // add text
@@ -431,28 +450,33 @@ class EditScrapbookViewController: UIViewController, UITextFieldDelegate, UIImag
 
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
         if let image = info[.originalImage] as? UIImage {
-            let imageView = UIImageView(image: image)
-            imageView.isUserInteractionEnabled = true
-            imageView.contentMode = .scaleAspectFit
-            imageView.frame = CGRect(x: 50, y: 50, width: 200, height: 200)
-            
-            // drag
-            let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
-            imageView.addGestureRecognizer(panGesture)
+            if isShadeMatching {
+                processImageWithGoogleLens()
+            } else {
+                let imageView = UIImageView(image: image)
+                imageView.isUserInteractionEnabled = true
+                imageView.contentMode = .scaleAspectFit
+                imageView.frame = CGRect(x: 50, y: 50, width: 200, height: 200)
+                
+                // drag
+                let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
+                imageView.addGestureRecognizer(panGesture)
 
-            // pinch(zoom in zoom out)
-            let pinchGesture = UIPinchGestureRecognizer(target: self, action: #selector(handlePinchGesture(_:)))
-            imageView.addGestureRecognizer(pinchGesture)
+                // pinch(zoom in zoom out)
+                let pinchGesture = UIPinchGestureRecognizer(target: self, action: #selector(handlePinchGesture(_:)))
+                imageView.addGestureRecognizer(pinchGesture)
 
-            // rotate
-            let rotationGesture = UIRotationGestureRecognizer(target: self, action: #selector(handleRotationGesture(_:)))
-            imageView.addGestureRecognizer(rotationGesture)
-            
-            let longPressGesture = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPressGesture(_:)))
-            imageView.addGestureRecognizer(longPressGesture)
-            
-            canvasView.addSubview(imageView)
+                // rotate
+                let rotationGesture = UIRotationGestureRecognizer(target: self, action: #selector(handleRotationGesture(_:)))
+                imageView.addGestureRecognizer(rotationGesture)
+                
+                let longPressGesture = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPressGesture(_:)))
+                imageView.addGestureRecognizer(longPressGesture)
+                
+                canvasView.addSubview(imageView)
+            }
         }
+        isShadeMatching = false
         picker.dismiss(animated: true, completion: nil)
     }
     
@@ -608,7 +632,20 @@ class EditScrapbookViewController: UIViewController, UITextFieldDelegate, UIImag
             }
         }
     }
-
+    
+    func processImageWithGoogleLens() {
+        GoogleLensService.searchWithGoogleLens() { result in
+            DispatchQueue.main.async {
+                print(result)
+                switch result {
+                case .success(let matches):
+                    print(matches)
+                case .failure(let error):
+                    print("error: \(error.localizedDescription)")
+                }
+            }
+        }
+    }
 }
 
 
@@ -648,5 +685,3 @@ extension UIColor {
         return String(format: "#%02X%02X%02X", r, g, b)
     }
 }
-
-
