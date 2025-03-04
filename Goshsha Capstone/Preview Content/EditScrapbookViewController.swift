@@ -114,7 +114,8 @@ class EditScrapbookViewController: UIViewController, UITextFieldDelegate, UIImag
             let backButton = UIBarButtonItem(image: UIImage(systemName: "arrow.backward"), style: .plain, target: self, action: #selector(backButtonTapped))
             backButton.tintColor = .blue
             
-
+            let saveButton = UIBarButtonItem(image: UIImage(systemName: "lock"), style: .plain, target: self, action: #selector(saveButtonTapped))
+            saveButton.tintColor = .blue
             
             let exportButton = UIBarButtonItem(image: UIImage(systemName: "square.and.arrow.up"), style: .plain, target: self, action: #selector(exportButtonTapped))
             exportButton.tintColor = .blue
