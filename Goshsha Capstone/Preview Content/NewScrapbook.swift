@@ -198,6 +198,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         container.addGestureRecognizer(panGesture)
     }
 
+    //get images from firebase once stickers are made and inputted
     private func stickerButton(imageUrl: String){
         guard let url = URL(string: imageUrl) else {return}
 
@@ -217,7 +218,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         guard let panel = contentPanel else { return }
 
         let imageView = UIImageView(image: image)
-        imageView.contentMode = .scaleAspecFit
+        imageView.contentMode = .scaleAspectFit
         imageView.isUserInteractionEnabled = true
         imageView.frame = CGRect(x: panel.bounds.midX - 50, y: panel.bounds.midY - 50, width: 100, height: 100)
 
