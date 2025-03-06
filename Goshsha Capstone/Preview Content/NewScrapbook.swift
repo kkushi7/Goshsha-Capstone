@@ -198,6 +198,35 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         container.addGestureRecognizer(panGesture)
     }
 
+    private func stickerButton(imageUrl: String){
+        guard let url = URL(string: imageUrl) else {return}
+
+        URLSession.shared.dataTask(with: url) { data, response, error in
+            guard let data = data, let image = UIImage(data: data), error == nil else {
+                print("Failed to load image from URL: \(error?.localizedDescription ?? "Unknown error")")
+                return
+            }
+
+            DispatchQueue.main.async {
+                self.addStickerToContentPanel(image: image)
+            }
+        }.resume()
+    }
+
+    private func addStickerToContentPanel(image: UIImage){
+        guard let panel = contentPanel else { return }
+
+        let imageView = UIImageView(image: image)
+        imageView.contentMode = .scaleAspecFit
+        imageView.isUserInteractionEnabled = true
+        imageView.frame = CGRect(x: panel.bounds.midX - 50, y: panel.bounds.midY - 50, width: 100, height: 100)
+
+        let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handleImagePan(_:)))
+        imageView.addGestureRecognizer(panGesture)
+
+        panel.addSubview(imageView)
+    }
+
     private func setBackgroundImage(image: UIImage) {
         guard let panel = contentPanel else { return }
         panel.subviews.first(where: { $0 is UIImageView })?.removeFromSuperview()
