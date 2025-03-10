@@ -7,16 +7,16 @@
 
 import UIKit
 
-struct FormattingControls: View {
-    @State private var selectedColor = Color.blue
-
-    var body: some View {
-        VStack {
-            ColorPicker("Pick a color", selection: $selectedColor)
-        }
-        .padding()
-    }
-}
+//struct FormattingControls: View {
+//    @State private var selectedColor = Color.blue
+//
+//    var body: some View {
+//        VStack {
+//            ColorPicker("Pick a color", selection: $selectedColor)
+//        }
+//        .padding()
+//    }
+//}
 
 class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     
@@ -90,7 +90,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         toolbar.barTintColor = .black
         
         toolbar.items = [
-            createToolbarButton(#selector(emojiTapped), "face.smiling"),
+            createToolbarButton(#selector(stickerButton), "face.smiling"),
             .flexibleSpace(),
             createToolbarButton(#selector(selectImageFromLibrary), "scribble"),
             .flexibleSpace(),
@@ -209,9 +209,10 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         container.addGestureRecognizer(panGesture)
     }
 
-    //get images from firebase once stickers are made and inputted
-    private func stickerButton(imageUrl: String){
-        guard let url = URL(string: imageUrl) else {return}
+    // get images url from firebase once stickers are made and inputted
+    // imageUrl: String, replace with
+    @objc private func stickerButton(){
+        guard let url = URL(string: "https://hips.hearstapps.com/hmg-prod/images/dog-puppy-on-garden-royalty-free-image-1586966191.jpg?crop=0.752xw:1.00xh;0.175xw,0&resize=1200:*") else {return}
 
         URLSession.shared.dataTask(with: url) { data, response, error in
             guard let data = data, let image = UIImage(data: data), error == nil else {
@@ -281,7 +282,6 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
     }
 
     // MARK: - Button Actions
-    @objc private func emojiTapped() { print("Emoji button tapped") }
     @objc private func frameTapped() { print("Frame button tapped") }
     @objc private func chatTapped() {
         let chatView = ChatbotViewController()
