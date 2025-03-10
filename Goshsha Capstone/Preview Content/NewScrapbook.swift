@@ -7,6 +7,17 @@
 
 import UIKit
 
+struct FormattingControls: View {
+    @State private var selectedColor = Color.blue
+
+    var body: some View {
+        VStack {
+            ColorPicker("Pick a color", selection: $selectedColor)
+        }
+        .padding()
+    }
+}
+
 class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     
     var isAddingToPanel = false
