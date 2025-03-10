@@ -124,7 +124,7 @@ class EditScrapbookViewController: UIViewController, UITextFieldDelegate, UIImag
             bottomToolbar.setItems([backButton, flexibleSpace, saveButton, flexibleSpace, exportButton], animated: false)
             
             let shadeMatchButton = UIBarButtonItem(image: UIImage(systemName: "play.circle"), style: .plain, target: self, action: #selector(shadeButtonTapped))
-            shadeButton.tintColor = .blue
+            shadeMatchButton.tintColor = .blue
         }
     
     func loadScrapbookData() {
@@ -348,9 +348,13 @@ class EditScrapbookViewController: UIViewController, UITextFieldDelegate, UIImag
         }
         
         let storageRef = Storage.storage().reference()
-        let photoRef = storageRef.child("scrapbook_photos/\(UUID().uuidString).jpg")
+//        let photoRef = storageRef.child("scrapbook_photos/\(UUID().uuidString).jpg")
+        let photoRef = storageRef.child("\(UUID().uuidString).jpg")
         
-        photoRef.putData(imageData, metadata: nil) { metadata, error in
+        let metadata = StorageMetadata()
+        metadata.contentType = "image/jpeg"
+        
+        photoRef.putData(imageData, metadata: metadata) { metadata, error in
             if let error = error {
                 print("Error uploading photo: \(error.localizedDescription)")
                 completion(nil)
