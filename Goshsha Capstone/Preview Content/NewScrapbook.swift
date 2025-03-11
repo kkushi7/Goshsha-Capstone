@@ -297,5 +297,6 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
 extension NewScrapbook: UIColorPickerViewControllerDelegate{
     func colorPickerViewControllerDidSelectColor(_ viewController: UIColorPickerViewController){
         setBackgroundColor(color: viewController.selectedColor)
+        viewController.dismiss(animated: true)
     }
 }
