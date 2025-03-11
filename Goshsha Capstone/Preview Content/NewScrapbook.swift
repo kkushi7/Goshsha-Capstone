@@ -239,24 +239,25 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         panel.addSubview(imageView)
     }
 
-    private func setBackgroundImage(image: UIImage) {
+    private func setBackgroundImage(color: UIColor) {
         guard let panel = contentPanel else { return }
         panel.subviews.first(where: { $0 is UIImageView })?.removeFromSuperview()
+        
+        panel.backgroundColor = color
+    }
 
-        let backgroundImageView = UIImageView(image: image)
-        backgroundImageView.contentMode = .scaleAspectFill
-        backgroundImageView.clipsToBounds = true
-        backgroundImageView.translatesAutoresizingMaskIntoConstraints = false
-        panel.insertSubview(backgroundImageView, at: 0)
-
-        NSLayoutConstraint.activate([
-            backgroundImageView.topAnchor.constraint(equalTo: panel.topAnchor),
-            backgroundImageView.bottomAnchor.constraint(equalTo: panel.bottomAnchor),
-            backgroundImageView.leadingAnchor.constraint(equalTo: panel.leadingAnchor),
-            backgroundImageView.trailingAnchor.constraint(equalTo: panel.trailingAnchor)
-        ])
+    @objc private func openColorPicker(){
+        let colorPicker = UIColorPickerViewController()
+        colorPicker.delegate = self
+        present(colorPicker, animated: true)
     }
     
+    extension NewScrapbook: UIColorPickerViewControllerDelegate{
+        func colorPickerViewControllerDidSelectColor(_ viewController: UIColorPickerViewController){
+            setBackgroundColor(color: viewController.selectedColor)
+        }
+    }
+
     // MARK: - Delete Mode
     @objc private func toggleDeleteMode() {
         isDeleteModeActive.toggle()
