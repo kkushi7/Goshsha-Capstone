@@ -6,23 +6,14 @@
 //
 
 import UIKit
-
-//struct FormattingControls: View {
-//    @State private var selectedColor = Color.blue
-//
-//    var body: some View {
-//        VStack {
-//            ColorPicker("Pick a color", selection: $selectedColor)
-//        }
-//        .padding()
-//    }
-//}
+import FirebaseStorage
 
 class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     
     var isAddingToPanel = false
     var isDeleteModeActive = false
     var contentPanel: UIView!
+    var stickerPanel: UIScrollView!
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -72,6 +63,9 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         panel.layer.shadowOpacity = 0.1
         panel.layer.shadowOffset = CGSize(width: 0, height: 2)
         panel.translatesAutoresizingMaskIntoConstraints = false
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(openColorPicker))
+        panel.addGestureRecognizer(tapGesture)
+        panel.isUserInteractionEnabled = true
         return panel
     }
 
@@ -174,6 +168,9 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         imageView.contentMode = .scaleAspectFit
         imageView.isUserInteractionEnabled = true
         imageView.sizeToFit()
+        
+        imageView.layer.cornerRadius = 20
+        imageView.clipsToBounds = true
 
         // Scale down imageView to 50% of panel size
         let scaleFactor = min((panel.bounds.width * 0.5) / imageView.bounds.width,
@@ -212,18 +209,101 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
     // get images url from firebase once stickers are made and inputted
     // imageUrl: String, replace with
     @objc private func stickerButton(){
-        guard let url = URL(string: "https://hips.hearstapps.com/hmg-prod/images/dog-puppy-on-garden-royalty-free-image-1586966191.jpg?crop=0.752xw:1.00xh;0.175xw,0&resize=1200:*") else {return}
+        showStickerPanel()
+    }
+    
+    private func showStickerPanel() {
+        if stickerPanel != nil { return }
 
-        URLSession.shared.dataTask(with: url) { data, response, error in
-            guard let data = data, let image = UIImage(data: data), error == nil else {
-                print("Failed to load image from URL: \(error?.localizedDescription ?? "Unknown error")")
+        stickerPanel = UIScrollView()
+        stickerPanel.backgroundColor = UIColor(white: 0.9, alpha: 1)
+        stickerPanel.layer.cornerRadius = 10
+        stickerPanel.translatesAutoresizingMaskIntoConstraints = false
+        stickerPanel.showsHorizontalScrollIndicator = false
+        stickerPanel.isScrollEnabled = true
+        
+        view.addSubview(stickerPanel)
+
+        NSLayoutConstraint.activate([
+            stickerPanel.heightAnchor.constraint(equalToConstant: 100),
+            stickerPanel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            stickerPanel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            stickerPanel.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16)
+        ])
+        
+        loadStickersFromFirebase()
+    }
+    
+    private func loadStickersFromFirebase() {
+        let storageRef = Storage.storage().reference().child("stickers")
+        
+        storageRef.listAll { result, error in
+            guard let result = result else {
+                print("Error listing stickers: \(error?.localizedDescription ?? "Unknown error")")
                 return
             }
+            
+            let dispatchGroup = DispatchGroup()
+            var stickerURLs: [(String, URL)] = []
+            
+            for item in result.items {
+                dispatchGroup.enter()
+                item.downloadURL { url, error in
+                    if let url = url {
+                        stickerURLs.append((item.name, url)) // Collect filename + URL
+                    }
+                    dispatchGroup.leave()
+                }
+            }
+            
+            dispatchGroup.notify(queue: .main) {
+                // Sort by filename to ensure consistent order
+                let sortedStickers = stickerURLs.sorted { $0.0 < $1.0 }
+                
+                self.stickerPanel.subviews.forEach { $0.removeFromSuperview() } // Clear previous stickers
+                var xOffset: CGFloat = 10
+                let imageSize: CGFloat = 80
+                
+                for (_, url) in sortedStickers {
+                    self.loadStickerPreview(url: url, xOffset: xOffset, imageSize: imageSize)
+                    xOffset += imageSize + 10
+                }
+                
+                self.stickerPanel.contentSize = CGSize(width: xOffset, height: 100)
+            }
+        }
+    }
 
+
+    private func loadStickerPreview(url: URL, xOffset: CGFloat, imageSize: CGFloat) {
+        URLSession.shared.dataTask(with: url) { data, _, error in
+            guard let data = data, let image = UIImage(data: data), error == nil else { return }
+            
             DispatchQueue.main.async {
-                self.addStickerToContentPanel(image: image)
+                let imageView = UIImageView(image: image)
+                imageView.frame = CGRect(x: xOffset, y: 10, width: imageSize, height: imageSize)
+                imageView.contentMode = .scaleAspectFit
+                imageView.layer.cornerRadius = 8
+                imageView.clipsToBounds = true
+                imageView.isUserInteractionEnabled = true
+
+                let tapGesture = UITapGestureRecognizer(target: self, action: #selector(self.stickerTapped(_:)))
+                imageView.addGestureRecognizer(tapGesture)
+
+                self.stickerPanel.addSubview(imageView)
             }
         }.resume()
+    }
+
+    @objc private func stickerTapped(_ sender: UITapGestureRecognizer) {
+        guard let imageView = sender.view as? UIImageView,
+              let image = imageView.image else { return }
+
+        addStickerToContentPanel(image: image)
+        
+        // Hide sticker panel after selection
+        stickerPanel.removeFromSuperview()
+        stickerPanel = nil
     }
 
     private func addStickerToContentPanel(image: UIImage){
@@ -231,8 +311,8 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
 
         let imageView = UIImageView(image: image)
         imageView.contentMode = .scaleAspectFit
+        imageView.frame = CGRect(x: panel.bounds.midX - 40, y: panel.bounds.midY - 40, width: 80, height: 80)
         imageView.isUserInteractionEnabled = true
-        imageView.frame = CGRect(x: panel.bounds.midX - 50, y: panel.bounds.midY - 50, width: 100, height: 100)
 
         let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handleImagePan(_:)))
         imageView.addGestureRecognizer(panGesture)
@@ -240,10 +320,27 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         panel.addSubview(imageView)
     }
 
-    private func setBackgroundImage(color: UIColor) {
+    private func setBackgroundImage(image: UIImage) {
         guard let panel = contentPanel else { return }
         panel.subviews.first(where: { $0 is UIImageView })?.removeFromSuperview()
-        
+        let backgroundImageView = UIImageView(image: image)
+         backgroundImageView.contentMode = .scaleAspectFill
+         backgroundImageView.clipsToBounds = true
+         backgroundImageView.layer.cornerRadius = 20
+         backgroundImageView.translatesAutoresizingMaskIntoConstraints = false
+         panel.insertSubview(backgroundImageView, at: 0)
+ 
+         NSLayoutConstraint.activate([
+             backgroundImageView.topAnchor.constraint(equalTo: panel.topAnchor),
+             backgroundImageView.bottomAnchor.constraint(equalTo: panel.bottomAnchor),
+             backgroundImageView.leadingAnchor.constraint(equalTo: panel.leadingAnchor),
+             backgroundImageView.trailingAnchor.constraint(equalTo: panel.trailingAnchor)
+         ])
+    }
+    
+    private func setBackgroundColor(color: UIColor) {
+        guard let panel = contentPanel else { return }
+        panel.subviews.first(where: { $0 is UIImageView })?.removeFromSuperview()
         panel.backgroundColor = color
     }
 
@@ -251,12 +348,6 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         let colorPicker = UIColorPickerViewController()
         colorPicker.delegate = self
         present(colorPicker, animated: true)
-    }
-    
-    extension NewScrapbook: UIColorPickerViewControllerDelegate{
-        func colorPickerViewControllerDidSelectColor(_ viewController: UIColorPickerViewController){
-            setBackgroundColor(color: viewController.selectedColor)
-        }
     }
 
     // MARK: - Delete Mode
@@ -289,5 +380,12 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         chatView.modalPresentationStyle = .overCurrentContext
         chatView.modalTransitionStyle = .crossDissolve
         present(chatView, animated: true, completion: nil)
+    }
+}
+
+extension NewScrapbook: UIColorPickerViewControllerDelegate{
+    func colorPickerViewControllerDidSelectColor(_ viewController: UIColorPickerViewController){
+        setBackgroundColor(color: viewController.selectedColor)
+        viewController.dismiss(animated: true)
     }
 }
