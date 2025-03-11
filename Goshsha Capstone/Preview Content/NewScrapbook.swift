@@ -168,6 +168,9 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         imageView.contentMode = .scaleAspectFit
         imageView.isUserInteractionEnabled = true
         imageView.sizeToFit()
+        
+        imageView.layer.cornerRadius = 20
+        imageView.clipsToBounds = true
 
         // Scale down imageView to 50% of panel size
         let scaleFactor = min((panel.bounds.width * 0.5) / imageView.bounds.width,
@@ -323,6 +326,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         let backgroundImageView = UIImageView(image: image)
          backgroundImageView.contentMode = .scaleAspectFill
          backgroundImageView.clipsToBounds = true
+         backgroundImageView.layer.cornerRadius = 20
          backgroundImageView.translatesAutoresizingMaskIntoConstraints = false
          panel.insertSubview(backgroundImageView, at: 0)
  
