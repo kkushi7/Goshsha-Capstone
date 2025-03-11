@@ -7,17 +7,6 @@
 
 import UIKit
 
-//struct FormattingControls: View {
-//    @State private var selectedColor = Color.blue
-//
-//    var body: some View {
-//        VStack {
-//            ColorPicker("Pick a color", selection: $selectedColor)
-//        }
-//        .padding()
-//    }
-//}
-
 class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     
     var isAddingToPanel = false
@@ -72,6 +61,9 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         panel.layer.shadowOpacity = 0.1
         panel.layer.shadowOffset = CGSize(width: 0, height: 2)
         panel.translatesAutoresizingMaskIntoConstraints = false
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(openColorPicker))
+        panel.addGestureRecognizer(tapGesture)
+        panel.isUserInteractionEnabled = true
         return panel
     }
 
@@ -240,10 +232,26 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         panel.addSubview(imageView)
     }
 
-    private func setBackgroundImage(color: UIColor) {
+    private func setBackgroundImage(image: UIImage) {
         guard let panel = contentPanel else { return }
         panel.subviews.first(where: { $0 is UIImageView })?.removeFromSuperview()
-        
+        let backgroundImageView = UIImageView(image: image)
+         backgroundImageView.contentMode = .scaleAspectFill
+         backgroundImageView.clipsToBounds = true
+         backgroundImageView.translatesAutoresizingMaskIntoConstraints = false
+         panel.insertSubview(backgroundImageView, at: 0)
+ 
+         NSLayoutConstraint.activate([
+             backgroundImageView.topAnchor.constraint(equalTo: panel.topAnchor),
+             backgroundImageView.bottomAnchor.constraint(equalTo: panel.bottomAnchor),
+             backgroundImageView.leadingAnchor.constraint(equalTo: panel.leadingAnchor),
+             backgroundImageView.trailingAnchor.constraint(equalTo: panel.trailingAnchor)
+         ])
+    }
+    
+    private func setBackgroundColor(color: UIColor) {
+        guard let panel = contentPanel else { return }
+        panel.subviews.first(where: { $0 is UIImageView })?.removeFromSuperview()
         panel.backgroundColor = color
     }
 
@@ -251,12 +259,6 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         let colorPicker = UIColorPickerViewController()
         colorPicker.delegate = self
         present(colorPicker, animated: true)
-    }
-    
-    extension NewScrapbook: UIColorPickerViewControllerDelegate{
-        func colorPickerViewControllerDidSelectColor(_ viewController: UIColorPickerViewController){
-            setBackgroundColor(color: viewController.selectedColor)
-        }
     }
 
     // MARK: - Delete Mode
@@ -289,5 +291,11 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         chatView.modalPresentationStyle = .overCurrentContext
         chatView.modalTransitionStyle = .crossDissolve
         present(chatView, animated: true, completion: nil)
+    }
+}
+
+extension NewScrapbook: UIColorPickerViewControllerDelegate{
+    func colorPickerViewControllerDidSelectColor(_ viewController: UIColorPickerViewController){
+        setBackgroundColor(color: viewController.selectedColor)
     }
 }
