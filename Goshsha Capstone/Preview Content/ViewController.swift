@@ -139,7 +139,7 @@ class ViewController: UIViewController {
     
     func segueToScrapBookVC() {
         let storyboard = UIStoryboard(name: "Main", bundle: nil)
-             if let scrapBookController = storyboard.instantiateViewController(withIdentifier: "ScrapBookViewController") as? ScrapBookViewController {
+             if let scrapBookController = storyboard.instantiateViewController(withIdentifier: "NewScrapbook") as? NewScrapbook {
                  scrapBookController.modalPresentationStyle = .fullScreen // Optional: set presentation style
                  present(scrapBookController, animated: true, completion: nil)
              }
