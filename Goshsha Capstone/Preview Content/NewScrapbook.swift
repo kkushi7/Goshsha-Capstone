@@ -225,7 +225,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         deleteButton.setTitleColor(.white, for: .normal)
         deleteButton.layer.cornerRadius = 10
         deleteButton.frame = CGRect(x: container.frame.width - 10, y: -10, width: 20, height: 20)
-        deleteButton.addTarget(self, action: #selector(deleteImage(_:)), for: .touchUpInside)
+        deleteButton.addTarget(self, action: #selector(deleteItem(_:)), for: .touchUpInside)
 
         container.addSubview(deleteButton)
 
@@ -336,21 +336,46 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         stickerPanel = nil
     }
 
-    private func addStickerToContentPanel(image: UIImage){
+    private func addStickerToContentPanel(image: UIImage) {
         guard let panel = contentPanel else { return }
 
+        // Create a container for the sticker
+        let container = UIView()
+        container.isUserInteractionEnabled = true
+        container.frame = CGRect(x: panel.bounds.midX - 40, y: panel.bounds.midY - 40, width: 80, height: 80)
+
+        // Create the sticker image view
         let imageView = UIImageView(image: image)
         imageView.contentMode = .scaleAspectFit
-        imageView.frame = CGRect(x: panel.bounds.midX - 40, y: panel.bounds.midY - 40, width: 80, height: 80)
         imageView.isUserInteractionEnabled = true
+        imageView.frame = container.bounds
+        imageView.layer.cornerRadius = 10
+        imageView.clipsToBounds = true
 
+        // Create the delete button
+        let deleteButton = UIButton(type: .system)
+        deleteButton.setTitle("✖", for: .normal)
+        deleteButton.isHidden = true
+        deleteButton.backgroundColor = .red
+        deleteButton.setTitleColor(.white, for: .normal)
+        deleteButton.layer.cornerRadius = 10
+        deleteButton.frame = CGRect(x: container.frame.width - 15, y: -10, width: 20, height: 20)
+        deleteButton.addTarget(self, action: #selector(deleteItem(_:)), for: .touchUpInside)
+
+        // Add views to the container
+        container.addSubview(imageView)
+        container.addSubview(deleteButton)
+
+        // Ensure stickers always appear on top
+        panel.addSubview(container)
+        panel.bringSubviewToFront(container)
+
+        // Gesture recognizers for movement and scaling
         let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handleImagePan(_:)))
-        imageView.addGestureRecognizer(panGesture)
+        container.addGestureRecognizer(panGesture)
 
         let pinchGesture = UIPinchGestureRecognizer(target: self, action: #selector(handleImagePinch(_:)))
-        imageView.addGestureRecognizer(pinchGesture)
-
-        panel.addSubview(imageView)
+        container.addGestureRecognizer(pinchGesture)
     }
 
     @objc private func handleImagePinch(_ gesture: UIPinchGestureRecognizer){
@@ -364,10 +389,10 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         panel.subviews.first(where: { $0 is UIImageView })?.removeFromSuperview()
         panel.layer.sublayers?.removeAll(where: { $0 is CAGradientLayer })
         let backgroundImageView = UIImageView(image: image)
-         backgroundImageView.contentMode = .scaleAspectFill
-         backgroundImageView.clipsToBounds = true
-         backgroundImageView.translatesAutoresizingMaskIntoConstraints = false
-         panel.insertSubview(backgroundImageView, at: 0)
+        backgroundImageView.contentMode = .scaleAspectFill
+        backgroundImageView.clipsToBounds = true
+        backgroundImageView.translatesAutoresizingMaskIntoConstraints = false
+        panel.insertSubview(backgroundImageView, at: 0)
  
          NSLayoutConstraint.activate([
              backgroundImageView.topAnchor.constraint(equalTo: panel.topAnchor),
@@ -400,9 +425,9 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         }
     }
 
-    @objc private func deleteImage(_ sender: UIButton) {
+    @objc private func deleteItem(_ sender: UIButton) {
         sender.superview?.removeFromSuperview()
-        print("Delete Image")
+        print("Deleted")
     }
 
     // MARK: - Gesture Handling
