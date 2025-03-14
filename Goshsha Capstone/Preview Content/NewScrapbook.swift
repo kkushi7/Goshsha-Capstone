@@ -26,7 +26,11 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         
         // Title Container View
         let titleContainer = UIView()
+        titleContainer.backgroundColor = .black
         titleContainer.translatesAutoresizingMaskIntoConstraints = false
+        titleContainer.layer.cornerRadius = 10
+        titleContainer.layer.maskedCorners = [.layerMinXMaxYCorner, .layerMaxXMaxYCorner]
+        titleContainer.clipsToBounds = true
         view.addSubview(titleContainer)
 
         // Title Label
@@ -48,6 +52,8 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         // Toolbar
         let toolbar = createToolbar()
         view.addSubview(toolbar)
+        
+        view.bringSubviewToFront(titleContainer)
 
         // Constraints
         setupConstraints(titleContainer: titleContainer, titleLabel: titleLabel, saveButton: saveButton, chatButton: chatButton, toolbar: toolbar)
@@ -59,7 +65,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         titleLabel.textColor = .white
         titleLabel.backgroundColor = .black
         titleLabel.font = UIFont(name: "Poppins-Bold", size: 28)
-        titleLabel.textAlignment = .center
+        titleLabel.textAlignment = .center        
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         return titleLabel
     }
@@ -88,6 +94,9 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         toolbar.translatesAutoresizingMaskIntoConstraints = false
         toolbar.tintColor = .white
         toolbar.barTintColor = .black
+        toolbar.layer.cornerRadius = 10
+        toolbar.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
+        toolbar.clipsToBounds = true
         
         toolbar.items = [
             createToolbarButton(#selector(stickerButton), "sticker"),
@@ -129,10 +138,10 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
             saveButton.heightAnchor.constraint(equalToConstant: 40),
 
             // Content Panel
-            contentPanel.topAnchor.constraint(equalTo: titleContainer.bottomAnchor, constant: 0),
+            contentPanel.topAnchor.constraint(equalTo: titleContainer.bottomAnchor, constant: -20),
             contentPanel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 0),
             contentPanel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: 0),
-            contentPanel.bottomAnchor.constraint(equalTo: toolbar.topAnchor, constant: 0),
+            contentPanel.bottomAnchor.constraint(equalTo: toolbar.topAnchor, constant: 20),
 
             // Toolbar
             toolbar.heightAnchor.constraint(equalToConstant: 80),
