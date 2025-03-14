@@ -187,6 +187,9 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         container.addSubview(imageView)
         panel.addSubview(container)
 
+        let pinchGesture = UIPinchGestureRecognizer(target: self, action: #selector(handleImagePinch(_:)))
+        imageView.addGestureRecognizer(pinchGesture)
+
         // Delete button setup
         let deleteButton = UIButton(type: .system)
         deleteButton.setTitle("✖", for: .normal)
@@ -317,7 +320,16 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handleImagePan(_:)))
         imageView.addGestureRecognizer(panGesture)
 
+        let pinchGesture = UIPinchGestureRecognizer(target: self, action: #selector(handleImagePinch(_:)))
+        imageView.addGestureRecognizer(pinchGesture)
+
         panel.addSubview(imageView)
+    }
+
+    @objc private func handleImagePinch(_ gesture: UIPinchGestureRecognizer){
+        guard let imageView = gesture.view as? UIImageView else { return }
+        imageView.transform = imageView.transform.scaledBy(x: gesture.scale, y: gesture.scale)
+        gesture.scale = 1.0
     }
 
     private func setBackgroundImage(image: UIImage) {
