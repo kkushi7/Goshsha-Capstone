@@ -54,10 +54,10 @@
             </objects>
             <point key="canvasLocation" x="62" y="624"/>
         </scene>
-        <!--Scrap Book View Controller-->
+        <!--New Scrapbook-->
         <scene sceneID="dER-ur-Sq0">
             <objects>
-                <viewController storyboardIdentifier="ScrapBookViewController" useStoryboardIdentifierAsRestorationIdentifier="YES" id="t3V-7B-qJ2" customClass="ScrapBookViewController" customModule="Goshsha_Capstone" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="NewScrapbook" useStoryboardIdentifierAsRestorationIdentifier="YES" id="t3V-7B-qJ2" customClass="NewScrapbook" customModule="Goshsha_Capstone" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="840-Xc-gZd">
                         <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>

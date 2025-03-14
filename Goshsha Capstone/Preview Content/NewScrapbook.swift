@@ -22,11 +22,20 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
 
     // MARK: - UI Setup
     private func setupUI() {
-        view.backgroundColor = .white
+        view.backgroundColor = .clear
+        
+        // Title Container View
+        let titleContainer = UIView()
+        titleContainer.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(titleContainer)
 
         // Title Label
         let titleLabel = createTitleLabel()
-        view.addSubview(titleLabel)
+        titleContainer.addSubview(titleLabel)
+
+        // Save Button
+        let saveButton = setupButton(imageName: "save", action: #selector(saveScrapbook))
+        titleContainer.addSubview(saveButton)
 
         // Content Panel
         contentPanel = createContentPanel()
@@ -41,7 +50,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         view.addSubview(toolbar)
 
         // Constraints
-        setupConstraints(titleLabel: titleLabel, chatButton: chatButton, toolbar: toolbar)
+        setupConstraints(titleContainer: titleContainer, titleLabel: titleLabel, saveButton: saveButton, chatButton: chatButton, toolbar: toolbar)
     }
 
     private func createTitleLabel() -> UILabel {
@@ -49,22 +58,19 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         titleLabel.text = "Your Scrapbook"
         titleLabel.textColor = .white
         titleLabel.backgroundColor = .black
-        titleLabel.font = UIFont.systemFont(ofSize: 36, weight: .bold)
+        titleLabel.font = UIFont(name: "Poppins-Bold", size: 28)
         titleLabel.textAlignment = .center
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         return titleLabel
     }
 
     private func createContentPanel() -> UIView {
-        let panel = UIView()
-        panel.backgroundColor = UIColor(white: 0.95, alpha: 1)
-        panel.layer.cornerRadius = 10
+        let panel = GradientView()
+        panel.translatesAutoresizingMaskIntoConstraints = false
         panel.layer.shadowColor = UIColor.black.cgColor
         panel.layer.shadowOpacity = 0.1
         panel.layer.shadowOffset = CGSize(width: 0, height: 2)
-        panel.translatesAutoresizingMaskIntoConstraints = false
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(openColorPicker))
-        panel.addGestureRecognizer(tapGesture)
+        panel.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(openColorPicker)))
         panel.isUserInteractionEnabled = true
         return panel
     }
@@ -84,53 +90,61 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         toolbar.barTintColor = .black
         
         toolbar.items = [
-            createToolbarButton(#selector(stickerButton), "face.smiling"),
+            createToolbarButton(#selector(stickerButton), "sticker"),
             .flexibleSpace(),
-            createToolbarButton(#selector(selectImageFromLibrary), "scribble"),
+            createToolbarButton(#selector(selectImageFromLibrary), "bg"),
             .flexibleSpace(),
-            createToolbarButton(#selector(cameraTapped), "camera"),
+            createToolbarButton(#selector(cameraTapped), "pics"),
             .flexibleSpace(),
-            createToolbarButton(#selector(frameTapped), "square"),
+            createToolbarButton(#selector(frameTapped), "border"),
             .flexibleSpace(),
-            createToolbarButton(#selector(toggleDeleteMode), "eraser")
+            createToolbarButton(#selector(toggleDeleteMode), "erase")
         ]
         
         return toolbar
     }
 
     private func createToolbarButton(_ action: Selector, _ imageName: String) -> UIBarButtonItem {
-        let button = UIButton(type: .system)
-        button.setImage(UIImage(systemName: imageName), for: .normal)
-        button.addTarget(self, action: action, for: .touchUpInside)
-        button.imageView?.contentMode = .scaleAspectFit
-        return UIBarButtonItem(customView: button)
+        let image = UIImage(named: imageName)?.withRenderingMode(.alwaysOriginal)
+        let button = UIBarButtonItem(image: image, style: .plain, target: self, action: action)
+        return button
     }
 
-    private func setupConstraints(titleLabel: UILabel, chatButton: UIButton, toolbar: UIToolbar) {
+    private func setupConstraints(titleContainer: UIView, titleLabel: UILabel, saveButton: UIButton, chatButton: UIButton, toolbar: UIToolbar) {
         NSLayoutConstraint.activate([
-            // Title
-            titleLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16),
-            titleLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            titleLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            titleLabel.heightAnchor.constraint(equalToConstant: 80),
+            titleContainer.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: -20),
+            titleContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            titleContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            titleContainer.heightAnchor.constraint(equalToConstant: 80),
+
+            // Title Label
+            titleLabel.centerXAnchor.constraint(equalTo: titleContainer.centerXAnchor),
+            titleLabel.centerYAnchor.constraint(equalTo: titleContainer.centerYAnchor),
+
+            // Save Button
+            saveButton.centerYAnchor.constraint(equalTo: titleLabel.centerYAnchor),
+            saveButton.leadingAnchor.constraint(equalTo: titleLabel.trailingAnchor, constant: 10),
+            saveButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            saveButton.widthAnchor.constraint(equalToConstant: 40),
+            saveButton.heightAnchor.constraint(equalToConstant: 40),
 
             // Content Panel
-            contentPanel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 16),
-            contentPanel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            contentPanel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            contentPanel.bottomAnchor.constraint(equalTo: toolbar.topAnchor, constant: -16),
+            contentPanel.topAnchor.constraint(equalTo: titleContainer.bottomAnchor, constant: 0),
+            contentPanel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 0),
+            contentPanel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: 0),
+            contentPanel.bottomAnchor.constraint(equalTo: toolbar.topAnchor, constant: 0),
 
             // Toolbar
             toolbar.heightAnchor.constraint(equalToConstant: 80),
             toolbar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             toolbar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             toolbar.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
-            
+
             // Chat Button
-            chatButton.trailingAnchor.constraint(equalTo: contentPanel.trailingAnchor, constant: -16),
-            chatButton.bottomAnchor.constraint(equalTo: contentPanel.bottomAnchor, constant: -16),
-            chatButton.widthAnchor.constraint(equalToConstant: 200),
-            chatButton.heightAnchor.constraint(equalToConstant: 200)
+            chatButton.trailingAnchor.constraint(equalTo: contentPanel.trailingAnchor, constant: 0),
+            chatButton.bottomAnchor.constraint(equalTo: contentPanel.bottomAnchor, constant: 0),
+            chatButton.widthAnchor.constraint(equalToConstant: 150),
+            chatButton.heightAnchor.constraint(equalToConstant: 150)
         ])
     }
 
@@ -141,6 +155,10 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         picker.delegate = self
         picker.sourceType = .photoLibrary
         present(picker, animated: true)
+    }
+    
+    @objc private func saveScrapbook() {
+        print("Scrapbook saved!")
     }
 
     @objc private func selectImageFromLibrary() {
@@ -335,10 +353,10 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
     private func setBackgroundImage(image: UIImage) {
         guard let panel = contentPanel else { return }
         panel.subviews.first(where: { $0 is UIImageView })?.removeFromSuperview()
+        panel.layer.sublayers?.removeAll(where: { $0 is CAGradientLayer })
         let backgroundImageView = UIImageView(image: image)
          backgroundImageView.contentMode = .scaleAspectFill
          backgroundImageView.clipsToBounds = true
-         backgroundImageView.layer.cornerRadius = 20
          backgroundImageView.translatesAutoresizingMaskIntoConstraints = false
          panel.insertSubview(backgroundImageView, at: 0)
  
@@ -353,6 +371,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
     private func setBackgroundColor(color: UIColor) {
         guard let panel = contentPanel else { return }
         panel.subviews.first(where: { $0 is UIImageView })?.removeFromSuperview()
+        panel.layer.sublayers?.removeAll(where: { $0 is CAGradientLayer })
         panel.backgroundColor = color
     }
 
