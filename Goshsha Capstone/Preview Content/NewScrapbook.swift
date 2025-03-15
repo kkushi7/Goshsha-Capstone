@@ -6,7 +6,9 @@
 //
 
 import UIKit
+import FirebaseAuth
 import FirebaseStorage
+import FirebaseFirestore
 
 class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     
@@ -14,6 +16,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
     var isDeleteModeActive = false
     var contentPanel: UIView!
     var stickerPanel: UIScrollView!
+    let db = Firestore.firestore();
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -167,7 +170,173 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
     }
     
     @objc private func saveScrapbook() {
-        print("Scrapbook saved!")
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+        guard let panel = contentPanel else { print("Error: No panel"); return }
+        
+        clearExistingData(uid: uid)
+
+        var photos: [[String: Any]] = []
+        let dispatchGroup = DispatchGroup()
+
+        for subview in panel.subviews where !(subview is UIButton) {
+            if let container = subview as? UIView,
+               let imageView = container.subviews.first(where: { $0 is UIImageView }) as? UIImageView {
+
+                var photoData: [String: Any] = [
+                    "id": UUID().uuidString,
+                    "x": container.frame.origin.x,
+                    "y": container.frame.origin.y,
+                    "scaleX": container.transform.a,
+                    "scaleY": container.transform.d,
+                    "rotation": atan2(container.transform.b, container.transform.a)
+                ]
+
+                if let image = imageView.image {
+                    dispatchGroup.enter()
+                    uploadPhoto(image: image) { url in
+                        if let url = url {
+                            photoData["url"] = url.absoluteString
+                            imageView.accessibilityIdentifier = url.absoluteString
+                            photos.append(photoData)
+                        }
+                        dispatchGroup.leave()
+                    }
+                }
+            }
+        }
+
+        dispatchGroup.notify(queue: .main) {
+            self.getBackgroundInfo { background in
+                let scrapbookData: [String: Any] = [
+                    "photos": photos,
+                    "background": background
+                ]
+
+                let userDoc = self.db.collection("users").document(uid)
+                userDoc.setData(["scrapbooks": scrapbookData], merge: true) { error in
+                    if let error = error {
+                        print("Error saving scrapbook: \(error.localizedDescription)")
+                    } else {
+                        print("Scrapbook saved successfully!")
+                    }
+                }
+            }
+        }
+    }
+    
+    private func getBackgroundInfo(completion: @escaping ([String: Any]) -> Void) {
+        guard let panel = contentPanel else {
+            completion([:])
+            return
+        }
+
+        // Check for background color
+        if let bgColor = panel.backgroundColor {
+            let hexColor = bgColor.toHexString()
+            completion(["type": "color", "value": hexColor])
+            return
+        }
+
+        // Check for gradient
+        if let gradientLayer = panel.layer.sublayers?.first(where: { $0 is CAGradientLayer }) as? CAGradientLayer,
+           let colors = gradientLayer.colors as? [CGColor] {
+            
+            let hexColors = colors.map { UIColor(cgColor: $0).toHexString() }
+            completion(["type": "gradient", "colors": hexColors])
+            return
+        }
+
+        // Check for background image
+        if let bgImageView = panel.subviews.first(where: { $0 is UIImageView }) as? UIImageView,
+           let bgImage = bgImageView.image {
+            
+            if let existingURL = bgImageView.accessibilityIdentifier {
+                // Image already has a URL
+                completion(["type": "image", "url": existingURL])
+            } else {
+                // No URL? Upload the image and get the URL
+                uploadPhoto(image: bgImage) { url in
+                    completion(["type": "image", "url": url?.absoluteString ?? ""])
+                }
+            }
+        } else {
+            // No valid background found
+            completion(["type": "none"])
+        }
+    }
+    
+    private func uploadPhoto(image: UIImage, completion: @escaping (URL?) -> Void) {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+        guard let imageData = image.jpegData(compressionQuality: 0.8) else { return }
+
+        let filename = "\(UUID().uuidString).jpg"
+        let path = "scrapbook_photos/\(uid)/\(filename)"
+        let storageRef = Storage.storage().reference().child(path)
+
+        let metadata = StorageMetadata()
+        metadata.contentType = "image/jpeg"
+
+        storageRef.putData(imageData, metadata: metadata) { _, error in
+            if let error = error {
+                print("Error uploading photo: \(error.localizedDescription)")
+                completion(nil)
+                return
+            }
+
+            storageRef.downloadURL { url, error in
+                if let url = url {
+                    completion(url)
+                } else {
+                    print("Error getting download URL: \(error?.localizedDescription ?? "Unknown error")")
+                    completion(nil)
+                }
+            }
+        }
+    }
+    
+    private func clearExistingData(uid: String) {
+        let userDoc = db.collection("users").document(uid)
+        let folderRef = Storage.storage().reference().child("scrapbook_photos/\(uid)")
+
+        folderRef.listAll { result, error in
+            if let error = error {
+                print("Error listing files: \(error.localizedDescription)")
+                return
+            }
+
+            guard let items = result?.items, !items.isEmpty else {
+                print("No items found in folder")
+                return
+            }
+
+            let dispatchGroup = DispatchGroup()
+
+            for item in items {
+                dispatchGroup.enter()
+                item.delete { error in
+                    if let error = error {
+                        print("Error deleting file: \(error.localizedDescription)")
+                    } else {
+                        print("Deleted file: \(item.fullPath)")
+                    }
+                    dispatchGroup.leave()
+                }
+            }
+
+            dispatchGroup.notify(queue: .main) {
+                print("All files deleted for user \(uid)")
+
+                userDoc.updateData([
+                    "scrapbooks": [:]
+                ]) { error in
+                    if let error = error {
+                        print("Error clearing Firestore scrapbook data: \(error.localizedDescription)")
+                    } else {
+                        print("Firestore scrapbook data cleared for user \(uid)")
+                    }
+                }
+            }
+        }
     }
 
     @objc private func selectImageFromLibrary() {
@@ -304,7 +473,6 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         }
     }
 
-
     private func loadStickerPreview(url: URL, xOffset: CGFloat, imageSize: CGFloat) {
         URLSession.shared.dataTask(with: url) { data, _, error in
             guard let data = data, let image = UIImage(data: data), error == nil else { return }
@@ -316,6 +484,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
                 imageView.layer.cornerRadius = 8
                 imageView.clipsToBounds = true
                 imageView.isUserInteractionEnabled = true
+                imageView.accessibilityIdentifier = url.absoluteString
 
                 let tapGesture = UITapGestureRecognizer(target: self, action: #selector(self.stickerTapped(_:)))
                 imageView.addGestureRecognizer(tapGesture)
@@ -327,16 +496,17 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
 
     @objc private func stickerTapped(_ sender: UITapGestureRecognizer) {
         guard let imageView = sender.view as? UIImageView,
-              let image = imageView.image else { return }
+              let image = imageView.image,
+              let url = imageView.accessibilityIdentifier else { return }
 
-        addStickerToContentPanel(image: image)
+        addStickerToContentPanel(image: image, url: url)
         
         // Hide sticker panel after selection
         stickerPanel.removeFromSuperview()
         stickerPanel = nil
     }
 
-    private func addStickerToContentPanel(image: UIImage) {
+    private func addStickerToContentPanel(image: UIImage, url: String) {
         guard let panel = contentPanel else { return }
 
         // Create a container for the sticker
@@ -351,6 +521,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         imageView.frame = container.bounds
         imageView.layer.cornerRadius = 10
         imageView.clipsToBounds = true
+        imageView.accessibilityIdentifier = url
 
         // Create the delete button
         let deleteButton = UIButton(type: .system)
@@ -452,5 +623,17 @@ extension NewScrapbook: UIColorPickerViewControllerDelegate{
     func colorPickerViewControllerDidSelectColor(_ viewController: UIColorPickerViewController){
         setBackgroundColor(color: viewController.selectedColor)
         viewController.dismiss(animated: true)
+    }
+}
+
+extension UIColor {
+    func toHex() -> String {
+        var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
+        self.getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+        
+        return String(format: "#%02X%02X%02X",
+                      Int(red * 255),
+                      Int(green * 255),
+                      Int(blue * 255))
     }
 }
