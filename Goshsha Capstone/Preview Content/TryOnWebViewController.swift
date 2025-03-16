@@ -50,7 +50,7 @@ class TryOnWebViewController: UIViewController, WKNavigationDelegate, WKUIDelega
         let scrapbookButton = UIButton(type: .system)
         scrapbookButton.setTitle("ScrapBook \u{2605}", for: .normal)
         scrapbookButton.addTarget(self, action: #selector(openScrapbookEditPage), for: .touchUpInside)
-        scrapbookButton.frame = CGRect(x: 110, y: 0, width: 110, height: 40)
+        scrapbookButton.frame = CGRect(x: 60, y: 0, width: 110, height: 40)
         
         titleView.addSubview(saveButton)
         titleView.addSubview(scrapbookButton)
@@ -138,7 +138,8 @@ class TryOnWebViewController: UIViewController, WKNavigationDelegate, WKUIDelega
     
     @objc func openScrapbookEditPage() {
         let scrapbookEditVC = NewScrapbook()
-        navigationController?.pushViewController(scrapbookEditVC, animated: true)
+        scrapbookEditVC.modalPresentationStyle = .fullScreen
+        present(scrapbookEditVC, animated: true, completion: nil)
     }
     
     @objc func saveButtonTapped() {
@@ -151,11 +152,15 @@ class TryOnWebViewController: UIViewController, WKNavigationDelegate, WKUIDelega
         //upload to storage
         uploadPhoto(image: screenshot) { [weak self] url in
             guard let self = self, let downloadURL = url else { return }
+            
+            let centerX = screenshot.size.width / 2
+            let centerY = screenshot.size.height / 2
+            
             let photoData: [String: Any] = [
                 "id": UUID().uuidString,
                 "url": downloadURL.absoluteString,
-                "x": 100,
-                "y": 150,
+                "x": centerX,
+                "y": centerY,
                 "scaleX": 1,
                 "scaleY": 1,
                 "rotation": 0
@@ -271,6 +276,7 @@ class TryOnWebViewController: UIViewController, WKNavigationDelegate, WKUIDelega
     
     // upload to Firebase storage
     func uploadPhoto(image: UIImage, completion: @escaping (URL?) -> Void) {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
         guard let imageData = image.jpegData(compressionQuality: 0.8) else {
             print("Failed to convert image to data")
             completion(nil)
@@ -278,9 +284,11 @@ class TryOnWebViewController: UIViewController, WKNavigationDelegate, WKUIDelega
         }
         
         let storageRef = Storage.storage().reference()
-        let photoRef = storageRef.child("scrapbook_photos/\(UUID().uuidString).jpg")
+        let photoRef = storageRef.child("scrapbook_photos/\(uid)/\(UUID().uuidString).jpg")
+        let metadata = StorageMetadata()
+        metadata.contentType = "image/jpeg"
         
-        photoRef.putData(imageData, metadata: nil) { metadata, error in
+        photoRef.putData(imageData, metadata: metadata) { metadata, error in
             if let error = error {
                 print("Error uploading photo: \(error.localizedDescription)")
                 completion(nil)
