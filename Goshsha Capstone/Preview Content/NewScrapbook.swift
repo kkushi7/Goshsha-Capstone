@@ -21,6 +21,8 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
+        loadStickers()
+        loadPhotos()
     }
 
     // MARK: - UI Setup
@@ -173,32 +175,36 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         guard let uid = Auth.auth().currentUser?.uid else { return }
         guard let panel = contentPanel else { print("Error: No panel"); return }
 
-        // Clear existing data first
         clearExistingData(uid: uid) {
             var photos: [[String: Any]] = []
+            var stickers: [[String: Any]] = []
             let dispatchGroup = DispatchGroup()
 
-            // Process all images
+            // Process all images and stickers
             for subview in panel.subviews where !(subview is UIButton) {
                 if let container = subview as? UIView,
                    let imageView = container.subviews.first(where: { $0 is UIImageView }) as? UIImageView {
 
-                    var photoData: [String: Any] = [
+                    var itemData: [String: Any] = [
                         "id": UUID().uuidString,
-                        "x": container.frame.origin.x,
-                        "y": container.frame.origin.y,
+                        "x": container.center.x,
+                        "y": container.center.y,
                         "scaleX": container.transform.a,
                         "scaleY": container.transform.d,
                         "rotation": atan2(container.transform.b, container.transform.a)
                     ]
 
-                    if let image = imageView.image {
+                    if let imageUrl = imageView.accessibilityIdentifier {
+                        // It's a sticker (URL already exists)
+                        itemData["url"] = imageUrl
+                        stickers.append(itemData)
+                    } else if let image = imageView.image {
+                        // It's an image that needs to be uploaded
                         dispatchGroup.enter()
                         self.uploadPhoto(image: image) { url in
                             if let url = url {
-                                photoData["url"] = url.absoluteString
-                                imageView.accessibilityIdentifier = url.absoluteString
-                                photos.append(photoData)
+                                itemData["url"] = url.absoluteString
+                                photos.append(itemData)
                             }
                             dispatchGroup.leave()
                         }
@@ -206,11 +212,12 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
                 }
             }
 
-            // Save background and photos
+            // Save background, photos, and stickers
             dispatchGroup.notify(queue: .main) {
                 self.getBackgroundInfo { background in
                     let scrapbookData: [String: Any] = [
                         "photos": photos,
+                        "stickers": stickers,
                         "background": background
                     ]
                     print(scrapbookData)
@@ -365,9 +372,8 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         picker.dismiss(animated: true)
     }
 
-    private func addImageToContentPanel(image: UIImage) {
+    private func addImageToContentPanel(image: UIImage, x: CGFloat? = nil, y: CGFloat? = nil, scaleX: CGFloat = 1.0, scaleY: CGFloat = 1.0, rotation: CGFloat = 0.0) {
         guard let panel = contentPanel else { return }
-        
         let container = UIView()
         container.isUserInteractionEnabled = true
 
@@ -375,27 +381,30 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         imageView.contentMode = .scaleAspectFit
         imageView.isUserInteractionEnabled = true
         imageView.sizeToFit()
-        
+
         imageView.layer.cornerRadius = 20
         imageView.clipsToBounds = true
 
         // Scale down imageView to 50% of panel size
         let scaleFactor = min((panel.bounds.width * 0.5) / imageView.bounds.width,
-                              (panel.bounds.height * 0.5) / imageView.bounds.height)
+                                (panel.bounds.height * 0.5) / imageView.bounds.height)
 
         imageView.frame = CGRect(x: 0, y: 0,
-                                 width: imageView.bounds.width * scaleFactor,
-                                 height: imageView.bounds.height * scaleFactor)
+                                width: imageView.bounds.width * scaleFactor,
+                                height: imageView.bounds.height * scaleFactor)
 
         // Set container's frame to match imageView
         container.frame = imageView.frame
+
+        // Apply scaling and rotation
+        container.transform = CGAffineTransform(scaleX: scaleX, y: scaleY).rotated(by: rotation)
 
         // Add subviews
         container.addSubview(imageView)
         panel.addSubview(container)
 
         let pinchGesture = UIPinchGestureRecognizer(target: self, action: #selector(handleImagePinch(_:)))
-        imageView.addGestureRecognizer(pinchGesture)
+        container.addGestureRecognizer(pinchGesture)
 
         // Delete button setup
         let deleteButton = UIButton(type: .system)
@@ -410,7 +419,11 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         container.addSubview(deleteButton)
 
         // Center the container inside the panel
-        container.center = CGPoint(x: panel.bounds.midX, y: panel.bounds.midY)
+        if x == nil || y == nil {
+            container.center = CGPoint(x: panel.bounds.midX, y: panel.bounds.midY)
+        } else {
+            container.center = CGPoint(x: x!, y: y!)
+        }
 
         let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handleImagePan(_:)))
         container.addGestureRecognizer(panGesture)
@@ -516,16 +529,68 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         stickerPanel.removeFromSuperview()
         stickerPanel = nil
     }
+    
+    private func loadStickers() {
+        guard let uid = Auth.auth().currentUser?.uid else {
+            print("User not logged in.")
+            return
+        }
 
-    private func addStickerToContentPanel(image: UIImage, url: String) {
+        db.collection("users").document(uid).getDocument { (document, error) in
+            if let error = error {
+                print("Error getting document: \(error)")
+                return
+            }
+
+            if let document = document, document.exists {
+                if let scrapbooks = document.data()?["scrapbooks"] as? [String: Any],
+                   let stickersData = scrapbooks["stickers"] as? [[String: Any]] {
+                    for stickerData in stickersData {
+                        self.loadSticker(from: stickerData)
+                    }
+                } else {
+                    print("No stickers data found.")
+                }
+            } else {
+                print("Document does not exist")
+            }
+        }
+    }
+    
+    private func loadSticker(from data: [String: Any]) {
+        guard let urlString = data["url"] as? String,
+              let url = URL(string: urlString),
+              let x = data["x"] as? CGFloat,
+              let y = data["y"] as? CGFloat,
+              let scaleX = data["scaleX"] as? CGFloat,
+              let scaleY = data["scaleY"] as? CGFloat,
+              let rotation = data["rotation"] as? CGFloat else {
+            print("Invalid sticker data")
+            return
+        }
+
+        URLSession.shared.dataTask(with: url) { data, _, error in
+            guard let data = data, let image = UIImage(data: data), error == nil else {
+                print("Failed to load sticker image from URL: \(url)")
+                return
+            }
+
+            DispatchQueue.main.async {
+                self.addStickerToContentPanel(image: image, url: urlString, x: x, y: y, scaleX: scaleX, scaleY: scaleY, rotation: rotation)
+            }
+        }.resume()
+    }
+
+    private func addStickerToContentPanel(image: UIImage, url: String, x: CGFloat? = nil, y: CGFloat? = nil, scaleX: CGFloat = 1.0, scaleY: CGFloat = 1.0, rotation: CGFloat = 0.0) {
         guard let panel = contentPanel else { return }
 
-        // Create a container for the sticker
+        let defaultX = panel.bounds.midX - 40
+        let defaultY = panel.bounds.midY - 40
+
         let container = UIView()
         container.isUserInteractionEnabled = true
-        container.frame = CGRect(x: panel.bounds.midX - 40, y: panel.bounds.midY - 40, width: 80, height: 80)
+        container.frame = CGRect(x: x ?? defaultX, y: y ?? defaultY, width: 80, height: 80)
 
-        // Create the sticker image view
         let imageView = UIImageView(image: image)
         imageView.contentMode = .scaleAspectFit
         imageView.isUserInteractionEnabled = true
@@ -534,7 +599,8 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         imageView.clipsToBounds = true
         imageView.accessibilityIdentifier = url
 
-        // Create the delete button
+        container.transform = CGAffineTransform(scaleX: scaleX, y: scaleY).rotated(by: rotation)
+
         let deleteButton = UIButton(type: .system)
         deleteButton.setTitle("✖", for: .normal)
         deleteButton.isHidden = true
@@ -544,20 +610,69 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         deleteButton.frame = CGRect(x: container.frame.width - 15, y: -10, width: 20, height: 20)
         deleteButton.addTarget(self, action: #selector(deleteItem(_:)), for: .touchUpInside)
 
-        // Add views to the container
         container.addSubview(imageView)
         container.addSubview(deleteButton)
 
-        // Ensure stickers always appear on top
         panel.addSubview(container)
         panel.bringSubviewToFront(container)
 
-        // Gesture recognizers for movement and scaling
         let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handleImagePan(_:)))
         container.addGestureRecognizer(panGesture)
 
         let pinchGesture = UIPinchGestureRecognizer(target: self, action: #selector(handleImagePinch(_:)))
         container.addGestureRecognizer(pinchGesture)
+    }
+    
+    private func loadPhotos() {
+        guard let uid = Auth.auth().currentUser?.uid else {
+            print("User not logged in.")
+            return
+        }
+
+        db.collection("users").document(uid).getDocument { (document, error) in
+            if let error = error {
+                print("Error getting document: \(error)")
+                return
+            }
+
+            if let document = document, document.exists {
+                if let scrapbooks = document.data()?["scrapbooks"] as? [String: Any],
+                   let photosData = scrapbooks["photos"] as? [[String: Any]] {
+                    for photoData in photosData {
+                        self.loadPhoto(from: photoData)
+                    }
+                } else {
+                    print("No photo data found.")
+                }
+            } else {
+                print("Document does not exist")
+            }
+        }
+    }
+    
+    private func loadPhoto(from data: [String: Any]) {
+        guard let urlString = data["url"] as? String,
+              let url = URL(string: urlString),
+              let x = data["x"] as? CGFloat,
+              let y = data["y"] as? CGFloat,
+              let scaleX = data["scaleX"] as? CGFloat,
+              let scaleY = data["scaleY"] as? CGFloat,
+              let rotation = data["rotation"] as? CGFloat else {
+            print("Invalid photo data")
+            return
+        }
+        print("Photo x: \(x), y: \(y), scaleX: \(scaleX), scaleY: \(scaleY), rotation: \(rotation)") // Print values
+
+        URLSession.shared.dataTask(with: url) { data, _, error in
+            guard let data = data, let image = UIImage(data: data), error == nil else {
+                print("Failed to load photo image from URL: \(url)")
+                return
+            }
+
+            DispatchQueue.main.async {
+                self.addImageToContentPanel(image: image, x: x, y: y, scaleX: scaleX, scaleY: scaleY, rotation: rotation)
+            }
+        }.resume()
     }
 
     @objc private func handleImagePinch(_ gesture: UIPinchGestureRecognizer){
