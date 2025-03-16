@@ -188,8 +188,6 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
 
                     var itemData: [String: Any] = [
                         "id": UUID().uuidString,
-                        "x": container.center.x,
-                        "y": container.center.y,
                         "scaleX": container.transform.a,
                         "scaleY": container.transform.d,
                         "rotation": atan2(container.transform.b, container.transform.a)
@@ -198,6 +196,8 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
                     if let imageUrl = imageView.accessibilityIdentifier {
                         // It's a sticker (URL already exists)
                         itemData["url"] = imageUrl
+                        itemData["x"] = container.frame.origin.x;
+                        itemData["y"] = container.frame.origin.y
                         stickers.append(itemData)
                     } else if let image = imageView.image {
                         // It's an image that needs to be uploaded
@@ -205,6 +205,8 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
                         self.uploadPhoto(image: image) { url in
                             if let url = url {
                                 itemData["url"] = url.absoluteString
+                                itemData["x"] = container.center.x;
+                                itemData["y"] = container.center.y
                                 photos.append(itemData)
                             }
                             dispatchGroup.leave()
