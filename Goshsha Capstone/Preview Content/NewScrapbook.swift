@@ -38,6 +38,10 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         titleContainer.layer.maskedCorners = [.layerMinXMaxYCorner, .layerMaxXMaxYCorner]
         titleContainer.clipsToBounds = true
         view.addSubview(titleContainer)
+        
+        // Return Button
+        let returnButton = setupButton(imageName: "return", action: #selector(returnButtonPressed))
+        titleContainer.addSubview(returnButton)
 
         // Title Label
         let titleLabel = createTitleLabel()
@@ -62,7 +66,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         view.bringSubviewToFront(titleContainer)
 
         // Constraints
-        setupConstraints(titleContainer: titleContainer, titleLabel: titleLabel, saveButton: saveButton, chatButton: chatButton, toolbar: toolbar)
+        setupConstraints(titleContainer: titleContainer, returnButton: returnButton, titleLabel: titleLabel, saveButton: saveButton, chatButton: chatButton, toolbar: toolbar)
     }
 
     private func createTitleLabel() -> UILabel {
@@ -125,7 +129,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         return button
     }
 
-    private func setupConstraints(titleContainer: UIView, titleLabel: UILabel, saveButton: UIButton, chatButton: UIButton, toolbar: UIToolbar) {
+    private func setupConstraints(titleContainer: UIView, returnButton: UIButton, titleLabel: UILabel, saveButton: UIButton, chatButton: UIButton, toolbar: UIToolbar) {
         NSLayoutConstraint.activate([
             titleContainer.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: -20),
             titleContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor),
@@ -135,11 +139,16 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
             // Title Label
             titleLabel.centerXAnchor.constraint(equalTo: titleContainer.centerXAnchor),
             titleLabel.centerYAnchor.constraint(equalTo: titleContainer.centerYAnchor),
+            
+            // Return Button (Modified constraints)
+            returnButton.centerYAnchor.constraint(equalTo: titleLabel.centerYAnchor),
+            returnButton.leadingAnchor.constraint(equalTo: titleContainer.leadingAnchor, constant: 20),
+            returnButton.widthAnchor.constraint(equalToConstant: 40),
+            returnButton.heightAnchor.constraint(equalToConstant: 40),
 
             // Save Button
             saveButton.centerYAnchor.constraint(equalTo: titleLabel.centerYAnchor),
-            saveButton.leadingAnchor.constraint(equalTo: titleLabel.trailingAnchor, constant: 10),
-            saveButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            saveButton.trailingAnchor.constraint(equalTo: titleContainer.trailingAnchor, constant: -20),
             saveButton.widthAnchor.constraint(equalToConstant: 40),
             saveButton.heightAnchor.constraint(equalToConstant: 40),
 
@@ -188,8 +197,6 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
 
                     var itemData: [String: Any] = [
                         "id": UUID().uuidString,
-                        "x": container.center.x,
-                        "y": container.center.y,
                         "scaleX": container.transform.a,
                         "scaleY": container.transform.d,
                         "rotation": atan2(container.transform.b, container.transform.a)
@@ -198,6 +205,8 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
                     if let imageUrl = imageView.accessibilityIdentifier {
                         // It's a sticker (URL already exists)
                         itemData["url"] = imageUrl
+                        itemData["x"] = container.frame.origin.x;
+                        itemData["y"] = container.frame.origin.y
                         stickers.append(itemData)
                     } else if let image = imageView.image {
                         // It's an image that needs to be uploaded
@@ -205,6 +214,8 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
                         self.uploadPhoto(image: image) { url in
                             if let url = url {
                                 itemData["url"] = url.absoluteString
+                                itemData["x"] = container.center.x;
+                                itemData["y"] = container.center.y
                                 photos.append(itemData)
                             }
                             dispatchGroup.leave()
@@ -356,6 +367,10 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
             print("All previous data cleared. Ready to save new scrapbook!")
             completion()
         }
+    }
+    
+    @objc func returnButtonPressed() {
+        dismiss(animated: true, completion: nil)
     }
 
     @objc private func selectImageFromLibrary() {
