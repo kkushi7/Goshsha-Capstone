@@ -23,6 +23,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         setupUI()
         loadStickers()
         loadPhotos()
+        loadBackground()
     }
 
     // MARK: - UI Setup
@@ -673,6 +674,58 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
                 self.addImageToContentPanel(image: image, x: x, y: y, scaleX: scaleX, scaleY: scaleY, rotation: rotation)
             }
         }.resume()
+    }
+    
+    private func loadBackground() {
+        guard let uid = Auth.auth().currentUser?.uid else {
+            print("User not logged in.")
+            return
+        }
+
+        db.collection("users").document(uid).getDocument { (document, error) in
+            if let error = error {
+                print("Error getting document: \(error)")
+                return
+            }
+
+            if let document = document, document.exists {
+                if let scrapbooks = document.data()?["scrapbooks"] as? [String: Any],
+                   let backgroundData = scrapbooks["background"] as? [String: Any] {
+                    self.loadBackground(from: backgroundData)
+                } else {
+                    print("No background data found.")
+                }
+            } else {
+                print("Document does not exist")
+            }
+        }
+    }
+
+    private func loadBackground(from data: [String: Any]) {
+        if let type = data["type"] as? String {
+            switch type {
+            case "color":
+                if let hexColor = data["value"] as? String, let color = UIColor(hexString: hexColor) {
+                    DispatchQueue.main.async {
+                        self.setBackgroundColor(color: color)
+                    }
+                }
+            case "image":
+                if let urlString = data["url"] as? String, let url = URL(string: urlString) {
+                    URLSession.shared.dataTask(with: url) { data, _, error in
+                        guard let data = data, let image = UIImage(data: data), error == nil else {
+                            print("Failed to load background image from URL: \(url)")
+                            return
+                        }
+                        DispatchQueue.main.async {
+                            self.setBackgroundImage(image: image)
+                        }
+                    }.resume()
+                }
+            default:
+                print("Unknown background type: \(type)")
+            }
+        }
     }
 
     @objc private func handleImagePinch(_ gesture: UIPinchGestureRecognizer){
