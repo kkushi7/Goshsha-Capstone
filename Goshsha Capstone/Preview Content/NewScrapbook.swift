@@ -172,52 +172,55 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
     @objc private func saveScrapbook() {
         guard let uid = Auth.auth().currentUser?.uid else { return }
         guard let panel = contentPanel else { print("Error: No panel"); return }
-        
-        clearExistingData(uid: uid)
 
-        var photos: [[String: Any]] = []
-        let dispatchGroup = DispatchGroup()
+        // Clear existing data first
+        clearExistingData(uid: uid) {
+            var photos: [[String: Any]] = []
+            let dispatchGroup = DispatchGroup()
 
-        for subview in panel.subviews where !(subview is UIButton) {
-            if let container = subview as? UIView,
-               let imageView = container.subviews.first(where: { $0 is UIImageView }) as? UIImageView {
+            // Process all images
+            for subview in panel.subviews where !(subview is UIButton) {
+                if let container = subview as? UIView,
+                   let imageView = container.subviews.first(where: { $0 is UIImageView }) as? UIImageView {
 
-                var photoData: [String: Any] = [
-                    "id": UUID().uuidString,
-                    "x": container.frame.origin.x,
-                    "y": container.frame.origin.y,
-                    "scaleX": container.transform.a,
-                    "scaleY": container.transform.d,
-                    "rotation": atan2(container.transform.b, container.transform.a)
-                ]
+                    var photoData: [String: Any] = [
+                        "id": UUID().uuidString,
+                        "x": container.frame.origin.x,
+                        "y": container.frame.origin.y,
+                        "scaleX": container.transform.a,
+                        "scaleY": container.transform.d,
+                        "rotation": atan2(container.transform.b, container.transform.a)
+                    ]
 
-                if let image = imageView.image {
-                    dispatchGroup.enter()
-                    uploadPhoto(image: image) { url in
-                        if let url = url {
-                            photoData["url"] = url.absoluteString
-                            imageView.accessibilityIdentifier = url.absoluteString
-                            photos.append(photoData)
+                    if let image = imageView.image {
+                        dispatchGroup.enter()
+                        self.uploadPhoto(image: image) { url in
+                            if let url = url {
+                                photoData["url"] = url.absoluteString
+                                imageView.accessibilityIdentifier = url.absoluteString
+                                photos.append(photoData)
+                            }
+                            dispatchGroup.leave()
                         }
-                        dispatchGroup.leave()
                     }
                 }
             }
-        }
 
-        dispatchGroup.notify(queue: .main) {
-            self.getBackgroundInfo { background in
-                let scrapbookData: [String: Any] = [
-                    "photos": photos,
-                    "background": background
-                ]
-
-                let userDoc = self.db.collection("users").document(uid)
-                userDoc.setData(["scrapbooks": scrapbookData], merge: true) { error in
-                    if let error = error {
-                        print("Error saving scrapbook: \(error.localizedDescription)")
-                    } else {
-                        print("Scrapbook saved successfully!")
+            // Save background and photos
+            dispatchGroup.notify(queue: .main) {
+                self.getBackgroundInfo { background in
+                    let scrapbookData: [String: Any] = [
+                        "photos": photos,
+                        "background": background
+                    ]
+                    print(scrapbookData)
+                    let userDoc = self.db.collection("users").document(uid)
+                    userDoc.setData(["scrapbooks": scrapbookData], merge: true) { error in
+                        if let error = error {
+                            print("Error saving scrapbook: \(error.localizedDescription)")
+                        } else {
+                            print("Scrapbook saved successfully!")
+                        }
                     }
                 }
             }
@@ -294,22 +297,26 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         }
     }
     
-    private func clearExistingData(uid: String) {
+    private func clearExistingData(uid: String, completion: @escaping () -> Void) {
         let userDoc = db.collection("users").document(uid)
         let folderRef = Storage.storage().reference().child("scrapbook_photos/\(uid)")
 
+        let dispatchGroup = DispatchGroup()
+
+        // Delete all files in storage
+        dispatchGroup.enter()
         folderRef.listAll { result, error in
             if let error = error {
                 print("Error listing files: \(error.localizedDescription)")
+                dispatchGroup.leave()
                 return
             }
 
             guard let items = result?.items, !items.isEmpty else {
-                print("No items found in folder")
+                print("No items found in folder. Skipping deletion.")
+                dispatchGroup.leave()
                 return
             }
-
-            let dispatchGroup = DispatchGroup()
 
             for item in items {
                 dispatchGroup.enter()
@@ -322,20 +329,24 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
                     dispatchGroup.leave()
                 }
             }
+            dispatchGroup.leave()
+        }
 
-            dispatchGroup.notify(queue: .main) {
-                print("All files deleted for user \(uid)")
-
-                userDoc.updateData([
-                    "scrapbooks": [:]
-                ]) { error in
-                    if let error = error {
-                        print("Error clearing Firestore scrapbook data: \(error.localizedDescription)")
-                    } else {
-                        print("Firestore scrapbook data cleared for user \(uid)")
-                    }
-                }
+        // Clear Firestore "scrapbooks" field
+        dispatchGroup.enter()
+        userDoc.updateData(["scrapbooks": FieldValue.delete()]) { error in
+            if let error = error {
+                print("Error deleting Firestore data: \(error.localizedDescription)")
+            } else {
+                print("Firestore scrapbook data deleted")
             }
+            dispatchGroup.leave()
+        }
+
+        // Ensure all deletions are complete before continuing
+        dispatchGroup.notify(queue: .main) {
+            print("All previous data cleared. Ready to save new scrapbook!")
+            completion()
         }
     }
 
@@ -557,6 +568,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
 
     private func setBackgroundImage(image: UIImage) {
         guard let panel = contentPanel else { return }
+        panel.backgroundColor = nil
         panel.subviews.first(where: { $0 is UIImageView })?.removeFromSuperview()
         panel.layer.sublayers?.removeAll(where: { $0 is CAGradientLayer })
         let backgroundImageView = UIImageView(image: image)
