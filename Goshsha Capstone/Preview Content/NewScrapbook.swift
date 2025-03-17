@@ -166,7 +166,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
 
             // Chat Button
             chatButton.trailingAnchor.constraint(equalTo: contentPanel.trailingAnchor, constant: 0),
-            chatButton.bottomAnchor.constraint(equalTo: contentPanel.bottomAnchor, constant: 0),
+            chatButton.bottomAnchor.constraint(equalTo: contentPanel.bottomAnchor, constant: -10),
             chatButton.widthAnchor.constraint(equalToConstant: 150),
             chatButton.heightAnchor.constraint(equalToConstant: 150)
         ])
@@ -776,9 +776,11 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
     }
 
     @objc private func openColorPicker(){
-        let colorPicker = UIColorPickerViewController()
-        colorPicker.delegate = self
-        present(colorPicker, animated: true)
+        if !isDeleteModeActive {
+            let colorPicker = UIColorPickerViewController()
+            colorPicker.delegate = self
+            present(colorPicker, animated: true)
+        }
     }
 
     // MARK: - Delete Mode
