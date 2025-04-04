@@ -18,6 +18,12 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
     var stickerPanel: UIScrollView!
     let db = Firestore.firestore();
 
+    //Added for eye dropper
+    var colorPickerOverlay: UIView!
+    var colorPreview: UIView!
+    var scrapbookBackgroundImage: UIImage!
+    var colorInfoLabel: UILabel!
+
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
@@ -67,6 +73,9 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
 
         // Constraints
         setupConstraints(titleContainer: titleContainer, returnButton: returnButton, titleLabel: titleLabel, saveButton: saveButton, chatButton: chatButton, toolbar: toolbar)
+    
+        //eyedropper colorpicker
+        setupColorPickerOverlay()
     }
 
     private func createTitleLabel() -> UILabel {
@@ -814,6 +823,116 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         chatView.modalTransitionStyle = .crossDissolve
         present(chatView, animated: true, completion: nil)
     }
+
+    //create eyedropper
+    private func setupColorPickerOverlay(){
+        colorPickerOverlay = UIView(frame: view.bounds)
+        colorPickerOverlay.backgroundColor = .clear
+        colorPickerOverlay.isUserInteractionEnabled = true
+        view.addSubview(colorPickerOverlay)
+        view.bringSubviewToFront(colorPickerOverlay)
+
+        let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handleEyedropperPan(_:)))
+        colorPickerOverlay.addGestureRecognizer(panGesture)
+
+        //Floating color preview bubble
+        colorPreview = UIView(frame: CGRect(x: 0, y: 0, width: 40, height: 40))
+        colorPreview.layer.cornerRadius = 20
+        colorPreview.layer.borderColor = UIColor.white.cgColor
+        colorPreview.layer.borderWidth = 2
+        colorPreview.layer.shadowColor = UIColor.black.cgColor
+        colorPreview.layer.shadowOpacity = 0.3
+        colorPreview.layer.shadowRadius = 4
+        colorPreview.isHidden = true
+        view.addSubview(colorPreview)
+
+        //Label for displaying hex and RGB values
+        colorInfoLabel = UILabel()
+        colorInfoLabel.font = UIFont.systemFont(ofSize: 14, weight: .bold)
+        colorInfoLabel.textColor = .white
+        colorInfoLabel.textAlignment = .center
+        colorInfoLabel.backgroundColor = UIColor.black.withAlphaComponent(0.7)
+        colorInfoLabel.layer.cornerRadius = 6
+        colorInfoLabel.layer.masksToBounds = true
+        colorInfoLabel.isHidden = true
+        view.addSubview(colorInfoLabel)
+    }
+
+    @objc private func handleEyedropperPan(_ gesture: UIPanGestureRecognizer){
+        let point = gesture.location(in: colorPickerOverlay)
+
+        switch gesture.state {
+        case .began .changed:
+            colorPreview.isHidden = false
+            colorInfoLabel.isHidden = false
+
+            //Positioning: show preview bubble above the finger
+            colorPreview.center = CGPoint(x: point.x, y: point.y - 50)
+            colorInfoLabel.frame = CGRect(x: point.x - 40, y: point.y - 85, width: 80, height: 25)
+
+            if let pickedColor = getPixelColor(from: scrapbookBackgroundImage, at: point) {
+                colorPreview.backgroundColor = pickedColor
+                //COnvert color to Hex and RGB
+                let hex = colorToHex(pickedColor)
+                let rgb = colorToRGBString(pickedColor)
+                colorInfoLabel.text = hex + "\n" + rgb
+            }
+
+        case .ended, .cancelled:
+            colorPreview.isHidden = true
+        default:
+            break
+        }
+    }
+
+    private func colorToHex(_ color: UIColor) -> String {
+        guard let component = color.cgColor.component else { return "#000000" }
+        let r = Int(components[0] * 255)
+        let g = Int(components[1] * 255)
+        let b = Int(components[2] * 255)
+        return String(format: "#%02X%02X%02X", r, g, b)
+    }
+
+    private func colorToRGBString(_ color: UIColor) -> String {
+    guard let components = color.cgColor.components else { return "RGB(0,0,0)" }
+    let r = Int(components[0] * 255)
+    let g = Int(components[1] * 255)
+    let b = Int(components[2] * 255)
+    return "RGB(\(r),\(g),\(b))"
+    }
+
+
+    private func getPixelColor(from image: UIImage, at point: CGPoint) -> UIColor? {
+        guard let cgImage = image.cgImage else { return nil }
+
+        //convert point from view coordinates to image coordinates
+        let imageViewSize = view.bounds.size
+        let imageSize = CGSize(width: cgImage.width, height: cgImage.height)
+
+        let xRatio = imageSize.width / imageViewSize.width
+        let yRatio = imageSize.height / imageViewSize.height
+
+        let imagePoint = CGPoint(x: point.x * xRatio, y: point.y * yRatio)
+
+        guard Int(imagePoint.x) < Int(imageSize.width),
+              Int(imagePoint.y) < Int(imageSize.height),
+              imagePoint.x >= 0, imagePoint.y >= 0 else { return nil }
+
+        guard let dataPovider = cgImage.dataProvider,
+              let data = dataProvider.data else { return nil }
+
+        let pixelData = CFDataGetBytePtr(data)
+        let bytesPerPixel = cgImage.bitsPerPixel / 8
+        let pixelIndex = Int(imagePoint.y) * cgImage.bytesPerRow + Int(imagePoint.x) * bytesPerPixel
+
+        let r = CGFloat(pixelData[pixelIndex]) / 255.0
+        let g = CGFloat(pixelData[pixelIndex + 1]) / 255.0
+        let b = CGFloat(pixelData[pixelIndex + 2]) / 255.0
+        let a = CGFloat(pixelData[pixelIndex + 3]) / 255.0
+
+        return UIColor(red: r, green: g, blue: b, alpha: a)
+    }
+
 }
 
 extension NewScrapbook: UIColorPickerViewControllerDelegate{
