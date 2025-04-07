@@ -862,7 +862,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         let point = gesture.location(in: colorPickerOverlay)
 
         switch gesture.state {
-        case .began .changed:
+        case UIGestureRecognizer.State.began, UIGestureRecognizer.State.changed:
             colorPreview.isHidden = false
             colorInfoLabel.isHidden = false
 
@@ -878,8 +878,10 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
                 colorInfoLabel.text = hex + "\n" + rgb
             }
 
-        case .ended, .cancelled:
+        case UIGestureRecognizer.State.ended, UIGestureRecognizer.State.cancelled:
             colorPreview.isHidden = true
+            colorInfoLabel.isHidden = true
+
         default:
             break
         }
@@ -918,7 +920,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
               Int(imagePoint.y) < Int(imageSize.height),
               imagePoint.x >= 0, imagePoint.y >= 0 else { return nil }
 
-        guard let dataPovider = cgImage.dataProvider,
+        guard let dataProvider = cgImage.dataProvider,
               let data = dataProvider.data else { return nil }
 
         let pixelData = CFDataGetBytePtr(data)
