@@ -859,7 +859,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
     }
 
     @objc private func handleEyedropperPan(_ gesture: UIPanGestureRecognizer){
-        let point = gesture.location(in: colorPickerOverlay)
+        let pointInImageView = gesture.location(in: scrapbookBackgroundImage)
 
         switch gesture.state {
         case UIGestureRecognizer.State.began, UIGestureRecognizer.State.changed:
@@ -867,10 +867,10 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
             colorInfoLabel.isHidden = false
 
             //Positioning: show preview bubble above the finger
-            colorPreview.center = CGPoint(x: point.x, y: point.y - 50)
-            colorInfoLabel.frame = CGRect(x: point.x - 40, y: point.y - 85, width: 80, height: 25)
+            colorPreview.center = CGPoint(x: pointInImageView.x, y: pointInImageView.y - 50)
+            colorInfoLabel.frame = CGRect(x: pointInImageView.x - 40, y: pointInImageView.y - 85, width: 80, height: 25)
 
-            if let pickedColor = getPixelColor(from: scrapbookBackgroundImage, at: point) {
+            if let pickedColor = getPixelColor(from: scrapbookBackgroundImage.image, at: point) {
                 colorPreview.backgroundColor = pickedColor
                 //COnvert color to Hex and RGB
                 let hex = colorToHex(pickedColor)
@@ -896,16 +896,16 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
     }
 
     private func colorToRGBString(_ color: UIColor) -> String {
-    guard let components = color.cgColor.components else { return "RGB(0,0,0)" }
-    let r = Int(components[0] * 255)
-    let g = Int(components[1] * 255)
-    let b = Int(components[2] * 255)
-    return "RGB(\(r),\(g),\(b))"
+        guard let components = color.cgColor.components else { return "RGB(0,0,0)" }
+        let r = Int(components[0] * 255)
+        let g = Int(components[1] * 255)
+        let b = Int(components[2] * 255)
+        return "RGB(\(r),\(g),\(b))"
     }
 
 
-    private func getPixelColor(from image: UIImage, at point: CGPoint) -> UIColor? {
-        guard let cgImage = image.cgImage else { return nil }
+    private func getPixelColor(from image: UIImage?, at point: CGPoint) -> UIColor? {
+        guard let image = image, let cgImage = image.cgImage else { return nil }
 
         //convert point from view coordinates to image coordinates
         let imageViewSize = view.bounds.size
@@ -914,7 +914,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         let xRatio = imageSize.width / imageViewSize.width
         let yRatio = imageSize.height / imageViewSize.height
 
-        let imagePoint = CGPoint(x: point.x * xRatio, y: point.y * yRatio)
+        let imagePoint = CGPoint(x: pointInImageView.x * xRatio, y: pointInImageView.y * yRatio)
 
         guard Int(imagePoint.x) < Int(imageSize.width),
               Int(imagePoint.y) < Int(imageSize.height),
