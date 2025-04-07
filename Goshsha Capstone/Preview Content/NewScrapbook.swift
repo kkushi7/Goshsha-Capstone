@@ -921,9 +921,9 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
               imagePoint.x >= 0, imagePoint.y >= 0 else { return nil }
 
         guard let dataProvider = cgImage.dataProvider,
-              let data = dataProvider.data else { return nil }
+              let data = dataProvider.data, 
+              let pixelData = CFDataGetBytePtr(data) else { return nil }
 
-        let pixelData = CFDataGetBytePtr(data)
         let bytesPerPixel = cgImage.bitsPerPixel / 8
         let pixelIndex = Int(imagePoint.y) * cgImage.bytesPerRow + Int(imagePoint.x) * bytesPerPixel
 
