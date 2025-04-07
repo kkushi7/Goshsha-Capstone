@@ -886,7 +886,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
     }
 
     private func colorToHex(_ color: UIColor) -> String {
-        guard let component = color.cgColor.component else { return "#000000" }
+        guard let components = color.cgColor.components else { return "#000000" }
         let r = Int(components[0] * 255)
         let g = Int(components[1] * 255)
         let b = Int(components[2] * 255)
