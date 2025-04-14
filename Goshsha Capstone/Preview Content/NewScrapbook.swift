@@ -16,13 +16,10 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
     var isDeleteModeActive = false
     var contentPanel: UIView!
     var stickerPanel: UIScrollView!
+    private var eyedropperTargetImageView: UIImageView?
+    private var colorPreview: UIView!
+    private var colorInfoLabel: UILabel!
     let db = Firestore.firestore();
-
-    //Added for eye dropper
-    var colorPickerOverlay: UIView!
-    var colorPreview: UIView!
-    var scrapbookBackgroundImage: UIImage!
-    var colorInfoLabel: UILabel!
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -30,6 +27,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         loadStickers()
         loadPhotos()
         loadBackground()
+        setupColorPreviewBubble()
     }
 
     // MARK: - UI Setup
@@ -73,9 +71,6 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
 
         // Constraints
         setupConstraints(titleContainer: titleContainer, returnButton: returnButton, titleLabel: titleLabel, saveButton: saveButton, chatButton: chatButton, toolbar: toolbar)
-    
-        //eyedropper colorpicker
-        setupColorPickerOverlay()
     }
 
     private func createTitleLabel() -> UILabel {
@@ -84,7 +79,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         titleLabel.textColor = .white
         titleLabel.backgroundColor = .black
         titleLabel.font = UIFont(name: "Poppins-Bold", size: 28)
-        titleLabel.textAlignment = .center        
+        titleLabel.textAlignment = .center
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         return titleLabel
     }
@@ -95,7 +90,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         panel.layer.shadowColor = UIColor.black.cgColor
         panel.layer.shadowOpacity = 0.1
         panel.layer.shadowOffset = CGSize(width: 0, height: 2)
-        panel.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(openColorPicker)))
+//        panel.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(openColorPicker)))
         panel.isUserInteractionEnabled = true
         return panel
     }
@@ -120,7 +115,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         toolbar.items = [
             createToolbarButton(#selector(stickerButton), "sticker"),
             .flexibleSpace(),
-            createToolbarButton(#selector(selectImageFromLibrary), "bg"),
+            createToolbarButton(#selector(openColorPicker), "bg"),
             .flexibleSpace(),
             createToolbarButton(#selector(cameraTapped), "pics"),
             .flexibleSpace(),
@@ -430,6 +425,9 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
 
         let pinchGesture = UIPinchGestureRecognizer(target: self, action: #selector(handleImagePinch(_:)))
         container.addGestureRecognizer(pinchGesture)
+        
+        let longPress = UILongPressGestureRecognizer(target: self, action: #selector(showBubbleOnImage(_:)))
+        imageView.addGestureRecognizer(longPress)
 
         // Delete button setup
         let deleteButton = UIButton(type: .system)
@@ -453,7 +451,90 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handleImagePan(_:)))
         container.addGestureRecognizer(panGesture)
     }
+    
+    @objc private func showBubbleOnImage(_ gesture: UILongPressGestureRecognizer) {
+        guard let imageView = gesture.view as? UIImageView,
+              let image = imageView.image else { return }
 
+        if gesture.state == .began {
+            eyedropperTargetImageView = imageView
+
+            let pointInImage = gesture.location(in: imageView)
+            let globalPoint = imageView.convert(pointInImage, to: view)
+
+            colorPreview.center = globalPoint
+            colorPreview.isHidden = false
+
+            colorInfoLabel.frame = CGRect(x: globalPoint.x - 40, y: globalPoint.y + 30, width: 80, height: 40)
+            colorInfoLabel.isHidden = false
+
+            updateBubbleColor(at: pointInImage)
+        }
+    }
+    
+    @objc private func dragBubble(_ gesture: UIPanGestureRecognizer) {
+        guard let imageView = eyedropperTargetImageView,
+              let image = imageView.image,
+              let bubble = gesture.view else { return }
+
+        let translation = gesture.translation(in: view)
+
+        // Move the bubble
+        bubble.center = CGPoint(x: bubble.center.x + translation.x, y: bubble.center.y + translation.y)
+        gesture.setTranslation(.zero, in: view)
+
+        // Move the label below the bubble
+        colorInfoLabel.frame = CGRect(x: bubble.center.x - 40, y: bubble.center.y + 30, width: 80, height: 40)
+
+        // Convert bubble's center to point inside imageView
+        let pointInImage = view.convert(bubble.center, to: imageView)
+
+        // Update color
+        if let color = getPixelColor(from: image, at: pointInImage, in: imageView) {
+            colorPreview.backgroundColor = color
+            colorInfoLabel.text = "\(colorToHex(color))\n\(colorToRGBString(color))"
+        }
+    }
+    
+    private func updateBubbleColor(at point: CGPoint) {
+        guard let imageView = eyedropperTargetImageView,
+              let image = imageView.image else { return }
+
+        if let color = getPixelColor(from: image, at: point, in: imageView) {
+            colorPreview.backgroundColor = color
+            colorInfoLabel.text = "\(colorToHex(color))\n\(colorToRGBString(color))"
+        }
+    }
+    
+    private func getPixelColor(from image: UIImage, at point: CGPoint, in imageView: UIImageView) -> UIColor? {
+        guard let cgImage = image.cgImage else { return nil }
+
+        // Calculate the pixel in the image coordinate system
+        let imageSize = image.size
+        let imageViewSize = imageView.bounds.size
+
+        let scaleX = imageSize.width / imageViewSize.width
+        let scaleY = imageSize.height / imageViewSize.height
+
+        let x = Int(point.x * scaleX)
+        let y = Int(point.y * scaleY)
+
+        guard x >= 0, y >= 0, x < cgImage.width, y < cgImage.height else { return nil }
+
+        let pixelData = cgImage.dataProvider?.data
+        guard let data = CFDataGetBytePtr(pixelData) else { return nil }
+
+        let bytesPerPixel = 4
+        let pixelIndex = ((cgImage.width * y) + x) * bytesPerPixel
+
+        let r = CGFloat(data[pixelIndex]) / 255.0
+        let g = CGFloat(data[pixelIndex + 1]) / 255.0
+        let b = CGFloat(data[pixelIndex + 2]) / 255.0
+        let a = CGFloat(data[pixelIndex + 3]) / 255.0
+
+        return UIColor(red: r, green: g, blue: b, alpha: a)
+    }
+    
     // get images url from firebase once stickers are made and inputted
     // imageUrl: String, replace with
     @objc private func stickerButton(){
@@ -751,6 +832,53 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
             }
         }
     }
+    
+    private func setupColorPreviewBubble() {
+        colorPreview = UIView(frame: CGRect(x: 50, y: 50, width: 40, height: 40))
+        colorPreview.layer.cornerRadius = 20
+        colorPreview.layer.borderColor = UIColor.white.cgColor
+        colorPreview.layer.borderWidth = 2
+        colorPreview.layer.shadowColor = UIColor.black.cgColor
+        colorPreview.layer.shadowOpacity = 0.3
+        colorPreview.layer.shadowRadius = 4
+        colorPreview.isHidden = true
+        colorPreview.isUserInteractionEnabled = true
+        view.addSubview(colorPreview)
+
+        let pan = UIPanGestureRecognizer(target: self, action: #selector(dragBubble(_:)))
+        colorPreview.addGestureRecognizer(pan)
+        
+        let dismissPress = UILongPressGestureRecognizer(target: self, action: #selector(hideBubble(_:)))
+        colorPreview.addGestureRecognizer(dismissPress)
+
+        colorInfoLabel = UILabel()
+        colorInfoLabel.font = UIFont.systemFont(ofSize: 12, weight: .bold)
+        colorInfoLabel.textColor = .white
+        colorInfoLabel.textAlignment = .center
+        colorInfoLabel.backgroundColor = UIColor.black.withAlphaComponent(0.7)
+        colorInfoLabel.layer.cornerRadius = 6
+        colorInfoLabel.layer.masksToBounds = true
+        colorInfoLabel.numberOfLines = 2
+        colorInfoLabel.isHidden = true
+        view.addSubview(colorInfoLabel)
+    }
+    
+    @objc private func hideBubble(_ gesture: UILongPressGestureRecognizer) {
+        UIView.animate(withDuration: 0.2) {
+            self.colorPreview.alpha = 0
+            self.colorInfoLabel.alpha = 0
+        } completion: { _ in
+            self.colorPreview.isHidden = true
+            self.colorInfoLabel.isHidden = true
+            self.colorPreview.alpha = 1
+            self.colorInfoLabel.alpha = 1
+        }
+        if gesture.state == .began {
+            colorPreview.isHidden = true
+            colorInfoLabel.isHidden = true
+            eyedropperTargetImageView = nil
+        }
+    }
 
     @objc private func handleImagePinch(_ gesture: UIPinchGestureRecognizer){
         guard let imageView = gesture.view as? UIImageView else { return }
@@ -791,6 +919,18 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
             present(colorPicker, animated: true)
         }
     }
+    
+    private func colorToHex(_ color: UIColor) -> String {
+        var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
+        color.getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+        return String(format: "#%02X%02X%02X", Int(red * 255), Int(green * 255), Int(blue * 255))
+    }
+
+    private func colorToRGBString(_ color: UIColor) -> String {
+        var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
+        color.getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+        return String(format: "RGB(%d, %d, %d)", Int(red * 255), Int(green * 255), Int(blue * 255))
+    }
 
     // MARK: - Delete Mode
     @objc private func toggleDeleteMode() {
@@ -823,118 +963,6 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         chatView.modalTransitionStyle = .crossDissolve
         present(chatView, animated: true, completion: nil)
     }
-
-    //create eyedropper
-    private func setupColorPickerOverlay(){
-        colorPickerOverlay = UIView(frame: view.bounds)
-        colorPickerOverlay.backgroundColor = .clear
-        colorPickerOverlay.isUserInteractionEnabled = true
-        view.addSubview(colorPickerOverlay)
-        view.bringSubviewToFront(colorPickerOverlay)
-
-        let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handleEyedropperPan(_:)))
-        colorPickerOverlay.addGestureRecognizer(panGesture)
-
-        //Floating color preview bubble
-        colorPreview = UIView(frame: CGRect(x: 0, y: 0, width: 40, height: 40))
-        colorPreview.layer.cornerRadius = 20
-        colorPreview.layer.borderColor = UIColor.white.cgColor
-        colorPreview.layer.borderWidth = 2
-        colorPreview.layer.shadowColor = UIColor.black.cgColor
-        colorPreview.layer.shadowOpacity = 0.3
-        colorPreview.layer.shadowRadius = 4
-        colorPreview.isHidden = true
-        view.addSubview(colorPreview)
-
-        //Label for displaying hex and RGB values
-        colorInfoLabel = UILabel()
-        colorInfoLabel.font = UIFont.systemFont(ofSize: 14, weight: .bold)
-        colorInfoLabel.textColor = .white
-        colorInfoLabel.textAlignment = .center
-        colorInfoLabel.backgroundColor = UIColor.black.withAlphaComponent(0.7)
-        colorInfoLabel.layer.cornerRadius = 6
-        colorInfoLabel.layer.masksToBounds = true
-        colorInfoLabel.isHidden = true
-        view.addSubview(colorInfoLabel)
-    }
-
-    @objc private func handleEyedropperPan(_ gesture: UIPanGestureRecognizer){
-        let pointInImageView = gesture.location(in: scrapbookBackgroundImage)
-
-        switch gesture.state {
-        case UIGestureRecognizer.State.began, UIGestureRecognizer.State.changed:
-            colorPreview.isHidden = false
-            colorInfoLabel.isHidden = false
-
-            //Positioning: show preview bubble above the finger
-            colorPreview.center = CGPoint(x: pointInImageView.x, y: pointInImageView.y - 50)
-            colorInfoLabel.frame = CGRect(x: pointInImageView.x - 40, y: pointInImageView.y - 85, width: 80, height: 25)
-
-            if let pickedColor = getPixelColor(from: scrapbookBackgroundImage.image, at: point) {
-                colorPreview.backgroundColor = pickedColor
-                //COnvert color to Hex and RGB
-                let hex = colorToHex(pickedColor)
-                let rgb = colorToRGBString(pickedColor)
-                colorInfoLabel.text = hex + "\n" + rgb
-            }
-
-        case UIGestureRecognizer.State.ended, UIGestureRecognizer.State.cancelled:
-            colorPreview.isHidden = true
-            colorInfoLabel.isHidden = true
-
-        default:
-            break
-        }
-    }
-
-    private func colorToHex(_ color: UIColor) -> String {
-        guard let components = color.cgColor.components else { return "#000000" }
-        let r = Int(components[0] * 255)
-        let g = Int(components[1] * 255)
-        let b = Int(components[2] * 255)
-        return String(format: "#%02X%02X%02X", r, g, b)
-    }
-
-    private func colorToRGBString(_ color: UIColor) -> String {
-        guard let components = color.cgColor.components else { return "RGB(0,0,0)" }
-        let r = Int(components[0] * 255)
-        let g = Int(components[1] * 255)
-        let b = Int(components[2] * 255)
-        return "RGB(\(r),\(g),\(b))"
-    }
-
-
-    private func getPixelColor(from image: UIImage?, at point: CGPoint) -> UIColor? {
-        guard let image = image, let cgImage = image.cgImage else { return nil }
-
-        //convert point from view coordinates to image coordinates
-        let imageViewSize = view.bounds.size
-        let imageSize = CGSize(width: cgImage.width, height: cgImage.height)
-
-        let xRatio = imageSize.width / imageViewSize.width
-        let yRatio = imageSize.height / imageViewSize.height
-
-        let imagePoint = CGPoint(x: pointInImageView.x * xRatio, y: pointInImageView.y * yRatio)
-
-        guard Int(imagePoint.x) < Int(imageSize.width),
-              Int(imagePoint.y) < Int(imageSize.height),
-              imagePoint.x >= 0, imagePoint.y >= 0 else { return nil }
-
-        guard let dataProvider = cgImage.dataProvider,
-              let data = dataProvider.data, 
-              let pixelData = CFDataGetBytePtr(data) else { return nil }
-
-        let bytesPerPixel = cgImage.bitsPerPixel / 8
-        let pixelIndex = Int(imagePoint.y) * cgImage.bytesPerRow + Int(imagePoint.x) * bytesPerPixel
-
-        let r = CGFloat(pixelData[pixelIndex]) / 255.0
-        let g = CGFloat(pixelData[pixelIndex + 1]) / 255.0
-        let b = CGFloat(pixelData[pixelIndex + 2]) / 255.0
-        let a = CGFloat(pixelData[pixelIndex + 3]) / 255.0
-
-        return UIColor(red: r, green: g, blue: b, alpha: a)
-    }
-
 }
 
 extension NewScrapbook: UIColorPickerViewControllerDelegate{
