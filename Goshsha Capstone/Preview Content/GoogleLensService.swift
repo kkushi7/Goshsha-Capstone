@@ -14,7 +14,7 @@ class GoogleLensService {
         let apiKey = "7358a7044289d5d8336e0957355613fdeb75f3fc46bad3d1da729ee8a6f5853f"
         let apiUrl = "https://serpapi.com/search"
         
-        let imageUrl = "https://firebasestorage.googleapis.com/v0/b/goshsha-f7fc1.firebasestorage.app/o/E3406154-EB14-4E4D-B9FD-D91F983102EB.jpg?alt=media&token=4e399d0c-86b0-4620-99bd-258e0ff112ec"
+        let imageUrl = "https://firebasestorage.googleapis.com/v0/b/goshsha-f7fc1.firebasestorage.app/o/purepng.com-lipstickclothinglipstickfashion-objects-girl-makeup-stick-sexy-beauty-accessory-lipstick-lip-lips-cosmetics-631522935839vcyto.png?alt=media&token=d51d24b8-8fd6-4b00-9698-ca3846f0129e"
 //        let correctedUrl = imageUrl.removingPercentEncoding ?? imageUrl
         let parameters = [
             "engine": "google_lens",

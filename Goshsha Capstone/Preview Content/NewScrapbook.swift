@@ -956,7 +956,19 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
     }
 
     // MARK: - Button Actions
-    @objc private func frameTapped() { print("Frame button tapped") }
+    @objc private func frameTapped() {
+        GoogleLensService.searchWithGoogleLens() { result in
+            DispatchQueue.main.async {
+                print(result)
+                switch result {
+                case .success(let matches):
+                    print(matches)
+                case .failure(let error):
+                    print("error: \(error.localizedDescription)")
+                }
+            }
+        }
+    }
     @objc private func chatTapped() {
         let chatView = ChatbotViewController()
         chatView.modalPresentationStyle = .overCurrentContext
