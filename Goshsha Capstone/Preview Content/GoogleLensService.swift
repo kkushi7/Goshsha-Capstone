@@ -70,6 +70,7 @@ class GoogleLensService {
         task.resume()
     }
 
+    //able to put any link from products
     let dynamicImageUrl = "https://your-dynamic-image-url.com/image.jpg"
     GoogleLensService.searchWithGoogleLens(imageUrl: dynamicImageUrl) { result in
         switch result {
