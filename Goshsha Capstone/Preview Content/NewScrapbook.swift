@@ -963,6 +963,19 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         chatView.modalTransitionStyle = .crossDissolve
         present(chatView, animated: true, completion: nil)
     }
+
+    private func getRelatedProducts(){
+        let dynamicImageUrl = "https://your-dynamic-image-url.com/image.jpg"
+        GoogleLensService.searchWithGoogleLens(imageUrl: dynamicImageUrl) { result in
+            switch result {
+                case .success(let data):
+                    print("Search success:", data)
+                case .failure(let error):
+                    print("Search failed:", error)
+            }
+        }
+    }
+    
 }
 
 extension NewScrapbook: UIColorPickerViewControllerDelegate{
