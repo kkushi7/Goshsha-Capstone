@@ -932,6 +932,39 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         return String(format: "RGB(%d, %d, %d)", Int(red * 255), Int(green * 255), Int(blue * 255))
     }
 
+    private func areHexSimilar(_ hex1: String, _ hex2: String, tolerance: CGFloat = 50.0) -> Bool{
+        guard let rgb1 = hexToRGB(hex1),
+              let rgb2 = hexToRGB(hex2) else{
+           return false    
+        }
+
+        let distance = sqrt(
+            pow(CGFloat(rgb1.r - rgb2.r), 2) +
+            pow(CGFloat(rgb1.g - rgb2.g), 2) +
+            pow(CGFloat(rgb1.b - rgb2.b), 2)
+        )
+
+        return distance <= tolerance
+
+    }
+
+    private func hexToRGB(_ hex: String) -> (r: Int, g: Int, b: Int)? (
+        var hexString = hex.trimmingCharacters(in: .whitespacesAndNewlines)
+                            .replaceingOccurences(of: "#", with: "")
+        if hexString.count == 3{
+            hexString = hexString.map { "\($0)\($0)" }.joined()
+        }
+
+        guard hexString.count == 6,
+            let hexValue = Int(hexString, radix: 16) else { return nil }
+        
+        let r = (hexValue >> 16) & 0xFF
+        let g = (hexValue >> 8) & 0xFF
+        let b = hexValue & 0xFF
+
+        return (r, g, b)
+    )
+
     // MARK: - Delete Mode
     @objc private func toggleDeleteMode() {
         isDeleteModeActive.toggle()
@@ -975,6 +1008,20 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         chatView.modalTransitionStyle = .crossDissolve
         present(chatView, animated: true, completion: nil)
     }
+
+    //able to put any link from products
+    private func getRelatedProducts(){
+        let dynamicImageUrl = "https://your-dynamic-image-url.com/image.jpg"
+        GoogleLensService.searchWithGoogleLens(imageUrl: dynamicImageUrl) { result in
+            switch result {
+                case .success(let data):
+                    print("Search success:", data)
+                case .failure(let error):
+                    print("Search failed:", error)
+            }
+        }
+    }
+    
 }
 
 extension NewScrapbook: UIColorPickerViewControllerDelegate{

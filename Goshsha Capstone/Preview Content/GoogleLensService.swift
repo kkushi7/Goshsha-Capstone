@@ -22,6 +22,14 @@ class GoogleLensService {
             "api_key": apiKey
         ]
 
+        var urlComponents = URLComponents(string: apiUrl)!
+        urlComponents.queryItems = parameters.map { URLQueryItem(name: $0.key, value: $0.value) }
+
+        guard let url = urlComponents.url else{
+            completion(.failure(NSError(domain: "Invalid Url", code: -1)))
+            return
+        }
+
         // query
         let urlWithParams = apiUrl + "?" + parameters.map { "\($0.key)=\($0.value)" }.joined(separator: "&")
         
@@ -60,4 +68,5 @@ class GoogleLensService {
         }
         task.resume()
     }
+
 }
