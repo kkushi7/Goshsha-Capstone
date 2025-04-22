@@ -964,6 +964,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         present(chatView, animated: true, completion: nil)
     }
 
+    //able to put any link from products
     private func getRelatedProducts(){
         let dynamicImageUrl = "https://your-dynamic-image-url.com/image.jpg"
         GoogleLensService.searchWithGoogleLens(imageUrl: dynamicImageUrl) { result in
