@@ -9,12 +9,12 @@ import UIKit
 import Foundation
 
 class GoogleLensService {
-    static func searchWithGoogleLens(completion: @escaping (Result<Any, Error>) -> Void) {
+    static func searchWithGoogleLens(url: String, completion: @escaping (Result<Any, Error>) -> Void) {
 
         let apiKey = "7358a7044289d5d8336e0957355613fdeb75f3fc46bad3d1da729ee8a6f5853f"
         let apiUrl = "https://serpapi.com/search"
         
-        let imageUrl = "https://firebasestorage.googleapis.com/v0/b/goshsha-f7fc1.firebasestorage.app/o/purepng.com-lipstickclothinglipstickfashion-objects-girl-makeup-stick-sexy-beauty-accessory-lipstick-lip-lips-cosmetics-631522935839vcyto.png?alt=media&token=d51d24b8-8fd6-4b00-9698-ca3846f0129e"
+        let imageUrl = url
 //        let correctedUrl = imageUrl.removingPercentEncoding ?? imageUrl
         let parameters = [
             "engine": "google_lens",

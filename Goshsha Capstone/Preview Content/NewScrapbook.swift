@@ -948,22 +948,23 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
 
     }
 
-    private func hexToRGB(_ hex: String) -> (r: Int, g: Int, b: Int)? (
+    private func hexToRGB(_ hex: String) -> (r: Int, g: Int, b: Int)? {
         var hexString = hex.trimmingCharacters(in: .whitespacesAndNewlines)
-                            .replaceingOccurences(of: "#", with: "")
-        if hexString.count == 3{
+            .replacingOccurrences(of: "#", with: "")
+        
+        if hexString.count == 3 {
             hexString = hexString.map { "\($0)\($0)" }.joined()
         }
 
         guard hexString.count == 6,
-            let hexValue = Int(hexString, radix: 16) else { return nil }
-        
+              let hexValue = Int(hexString, radix: 16) else { return nil }
+
         let r = (hexValue >> 16) & 0xFF
         let g = (hexValue >> 8) & 0xFF
         let b = hexValue & 0xFF
 
         return (r, g, b)
-    )
+    }
 
     // MARK: - Delete Mode
     @objc private func toggleDeleteMode() {
@@ -990,17 +991,17 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
 
     // MARK: - Button Actions
     @objc private func frameTapped() {
-        GoogleLensService.searchWithGoogleLens() { result in
-            DispatchQueue.main.async {
-                print(result)
-                switch result {
-                case .success(let matches):
-                    print(matches)
-                case .failure(let error):
-                    print("error: \(error.localizedDescription)")
-                }
-            }
-        }
+//        GoogleLensService.searchWithGoogleLens() { result in
+//            DispatchQueue.main.async {
+//                print(result)
+//                switch result {
+//                case .success(let matches):
+//                    print(matches)
+//                case .failure(let error):
+//                    print("error: \(error.localizedDescription)")
+//                }
+//            }
+//        }
     }
     @objc private func chatTapped() {
         let chatView = ChatbotViewController()
@@ -1011,8 +1012,8 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
 
     //able to put any link from products
     private func getRelatedProducts(){
-        let dynamicImageUrl = "https://your-dynamic-image-url.com/image.jpg"
-        GoogleLensService.searchWithGoogleLens(imageUrl: dynamicImageUrl) { result in
+        let dynamicImageUrl = "https://firebasestorage.googleapis.com/v0/b/goshsha-f7fc1.firebasestorage.app/o/purepng.com-lipstickclothinglipstickfashion-objects-girl-makeup-stick-sexy-beauty-accessory-lipstick-lip-lips-cosmetics-631522935839vcyto.png?alt=media&token=d51d24b8-8fd6-4b00-9698-ca3846f0129e"
+        GoogleLensService.searchWithGoogleLens(url: dynamicImageUrl) { result in
             switch result {
                 case .success(let data):
                     print("Search success:", data)

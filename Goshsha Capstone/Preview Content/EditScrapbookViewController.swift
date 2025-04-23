@@ -415,7 +415,6 @@ class EditScrapbookViewController: UIViewController, UITextFieldDelegate, UIImag
 //        imagePicker.sourceType = .photoLibrary
 //        imagePicker.delegate = self
 //        present(imagePicker, animated: true, completion: nil)
-        processImageWithGoogleLens()
     }
 
     
@@ -455,7 +454,7 @@ class EditScrapbookViewController: UIViewController, UITextFieldDelegate, UIImag
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
         if let image = info[.originalImage] as? UIImage {
             if isShadeMatching {
-                processImageWithGoogleLens()
+//                processImageWithGoogleLens()
             } else {
                 let imageView = UIImageView(image: image)
                 imageView.isUserInteractionEnabled = true
@@ -637,19 +636,6 @@ class EditScrapbookViewController: UIViewController, UITextFieldDelegate, UIImag
         }
     }
     
-    func processImageWithGoogleLens() {
-        GoogleLensService.searchWithGoogleLens() { result in
-            DispatchQueue.main.async {
-                print(result)
-                switch result {
-                case .success(let matches):
-                    print(matches)
-                case .failure(let error):
-                    print("error: \(error.localizedDescription)")
-                }
-            }
-        }
-    }
 }
 
 
