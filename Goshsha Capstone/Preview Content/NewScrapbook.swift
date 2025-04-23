@@ -1011,9 +1011,56 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
     }
 
     //able to put any link from products
-    private func getRelatedProducts(){
-        let dynamicImageUrl = "https://firebasestorage.googleapis.com/v0/b/goshsha-f7fc1.firebasestorage.app/o/purepng.com-lipstickclothinglipstickfashion-objects-girl-makeup-stick-sexy-beauty-accessory-lipstick-lip-lips-cosmetics-631522935839vcyto.png?alt=media&token=d51d24b8-8fd6-4b00-9698-ca3846f0129e"
-        GoogleLensService.searchWithGoogleLens(url: dynamicImageUrl) { result in
+    private func getRelatedProducts(from image: UIImage){
+       // let dynamicImageUrl = "https://firebasestorage.googleapis.com/v0/b/goshsha-f7fc1.firebasestorage.app/o/purepng.com-lipstickclothinglipstickfashion-objects-girl-makeup-stick-sexy-beauty-accessory-lipstick-lip-lips-cosmetics-631522935839vcyto.png?alt=media&token=d51d24b8-8fd6-4b00-9698-ca3846f0129e"
+       // GoogleLensService.searchWithGoogleLens(url: dynamicImageUrl) { result in
+       //     switch result {
+       //         case .success(let data):
+       //             print("Search success:", data)
+       //         case .failure(let error):
+       //             print("Search failed:", error)
+        //    }
+       // }
+       detecObjects(in: image) { [weak self] objects in
+           guard let firstObject = objects.first else {
+               print("No objects found")
+               return
+           }
+
+           if let cropped = self?.crop(image: image, to: firstObject.boundingBox){
+              self?.uploadToFirebase(image: cropped) { reult in
+                  switch result {
+                    case .success(let imageUrl):
+                        self?.searchWithLens(using: imageUrl)
+                    case .failure(let error):
+                        print("Upload failed:", error)
+                  }
+              }
+           }
+       }
+    }
+
+    private func uploadToFirebase(image: UIImage, completion: @escaping (Result<String, Error>) -> Void){
+        let storageRef = Storage.storage().reference().child("cropped_images/\(UUID().uuidString).jpg")
+        if let imageData = image.jpegData(compressionQuality: 0.9){
+            storageRef.putData(imageData, metadata: nil) { metadata, error in
+                if let error = error {
+                    completion(.failure(error))
+                    return
+                }
+                storageRef.downloadURL { url, error in
+                    if let url = url {
+                        completion(.success(url.absoluteString))
+                    } else {
+                        completion(.failure(error ?? NSError(domain: "", code: -1)))
+                    }
+                }
+            }
+        }
+    }
+
+    private func searchWithLens(using imageUrl: String) {
+        GoogleLensService.searchWithGoogleLens(url: imageUrl) { result in
             switch result {
                 case .success(let data):
                     print("Search success:", data)
@@ -1021,6 +1068,32 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
                     print("Search failed:", error)
             }
         }
+    }
+
+    private func detectObjects(in image: UIImage, completion: @escaping ([VNRecognizedObjectObservation]) -> Void) {
+        guard let cgImage = image,cgImage else { return }
+
+        let request = VNRecognizeObjectsRequest { request, error in
+            let results = (request.results as? [VNRecognizedObjectObservation]) ?? []
+            completion(results)
+        }
+
+        let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
+        try? handler.perform([request])
+    }
+
+    private func crop(image: UIImage, to rect: CGRect) -> UIImage? {
+        guard let cgImage = image.cgImage else { return nil }
+        let width = CGFloat(cgImage.width)
+        let height = CGFloat(cgImage.height)
+        let scaledRect - CGRect(x: rect.origin.x * width,
+                                y: (1 - rect.origin.y - rect.height) * height,
+                                width: rect.width * width,
+                                height: rect.height * height)
+        if let croppedCG = cgImage.cropping(to: scaledRect){
+            return UIImage(cgImage: croppedCG)
+        }
+        return nil
     }
     
 }
