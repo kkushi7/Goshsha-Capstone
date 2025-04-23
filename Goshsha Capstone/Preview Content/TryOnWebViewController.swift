@@ -144,6 +144,7 @@ class TryOnWebViewController: UIViewController, WKNavigationDelegate, WKUIDelega
     
     @objc func saveButtonTapped() {
 //        print("Saved to scrapbook")
+        print("URL: \(webView.url?.absoluteString ?? "No URL loaded")")
         guard let screenshot = captureScreenshot() else {
             print("Failed to capture screenshot")
             return
