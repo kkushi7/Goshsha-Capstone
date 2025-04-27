@@ -95,10 +95,50 @@ class ChatbotViewController: UIViewController {
 
     @objc private func buyConfirmed() {
         updateHelpBox(with: "Great! Redirecting you now...", fontSize: 26)
+        
+        let selectedImageURL = "https://firebasestorage.googleapis.com/v0/b/goshsha-f7fc1.firebasestorage.app/o/F3D3A61D-5DC7-49A4-B562-FE35B72FD10D.jpg?alt=media&token=9bfecce3-4386-4262-be74-b5b762811cf0"
+        let url = "https://firebasestorage.googleapis.com/v0/b/goshsha-f7fc1.firebasestorage.app/o/Screenshot%202025-04-26%20at%209.37.46%E2%80%AFPM.png?alt=media&token=a782fc99-0572-4880-b786-16bde4ea5ae7"
+        getRelatedProducts(url: selectedImageURL)
+//        getRelatedProducts(url: url)
     }
 
     @objc private func buyDeclined() {
         dismiss(animated: true, completion: nil)
+    }
+    
+    // able to put any link from products
+    private func getRelatedProducts(url: String){
+        GoogleLensService.searchWithGoogleLens(url: url) { result in
+            switch result {
+            case .success(let data):
+                print("Search success:", data)
+
+                if let dict = data as? [String: Any],
+                   let visualMatches = dict["visual_matches"] as? [[String: Any]] {
+
+                    let results = visualMatches.compactMap { match -> LensResult? in
+                        if let imageUrl = match["image"] as? String,
+                           let linkUrl = match["link"] as? String {
+                            return LensResult(imageUrl: imageUrl, linkUrl: linkUrl)
+                        } else {
+                            return nil
+                        }
+                    }
+
+                    DispatchQueue.main.async {
+                        let resultsVC = GoogleLensResultViewController()
+                        resultsVC.results = results
+                        resultsVC.modalPresentationStyle = .fullScreen
+                        self.present(resultsVC, animated: true)
+                    }
+                } else {
+                    print("No visual matches found!")
+                }
+
+            case .failure(let error):
+                print("Search failed:", error)
+            }
+        }
     }
 
     private func shadeAnalyzeBot() {
