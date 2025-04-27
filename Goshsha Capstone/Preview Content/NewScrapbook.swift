@@ -217,8 +217,11 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
                         dispatchGroup.enter()
                         self.uploadPhoto(image: image) { url in
                             if let url = url {
+                                if let imageView = container.subviews.first as? ScrapbookImageView {
+                                    imageView.firebaseURL = url.absoluteString
+                                }
                                 itemData["url"] = url.absoluteString
-                                itemData["x"] = container.center.x;
+                                itemData["x"] = container.center.x
                                 itemData["y"] = container.center.y
                                 photos.append(itemData)
                             }
@@ -311,6 +314,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
 
             storageRef.downloadURL { url, error in
                 if let url = url {
+                    print("Download URL: \(url.absoluteString)")
                     completion(url)
                 } else {
                     print("Error getting download URL: \(error?.localizedDescription ?? "Unknown error")")
@@ -397,7 +401,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         let container = UIView()
         container.isUserInteractionEnabled = true
 
-        let imageView = UIImageView(image: image)
+        let imageView = ScrapbookImageView(image: image)
         imageView.contentMode = .scaleAspectFit
         imageView.isUserInteractionEnabled = true
         imageView.sizeToFit()
@@ -428,6 +432,10 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         
         let longPress = UILongPressGestureRecognizer(target: self, action: #selector(showBubbleOnImage(_:)))
         imageView.addGestureRecognizer(longPress)
+        
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleImageTap(_:)))
+        imageView.isUserInteractionEnabled = true
+        imageView.addGestureRecognizer(tapGesture)
 
         // Delete button setup
         let deleteButton = UIButton(type: .system)
@@ -450,6 +458,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
 
         let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handleImagePan(_:)))
         container.addGestureRecognizer(panGesture)
+        
     }
     
     @objc private func showBubbleOnImage(_ gesture: UILongPressGestureRecognizer) {
@@ -608,7 +617,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
             guard let data = data, let image = UIImage(data: data), error == nil else { return }
             
             DispatchQueue.main.async {
-                let imageView = UIImageView(image: image)
+                let imageView = ScrapbookImageView(image: image)
                 imageView.frame = CGRect(x: xOffset, y: 10, width: imageSize, height: imageSize)
                 imageView.contentMode = .scaleAspectFit
                 imageView.layer.cornerRadius = 8
@@ -697,7 +706,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         container.isUserInteractionEnabled = true
         container.frame = CGRect(x: x ?? defaultX, y: y ?? defaultY, width: 80, height: 80)
 
-        let imageView = UIImageView(image: image)
+        let imageView = ScrapbookImageView(image: image)
         imageView.contentMode = .scaleAspectFit
         imageView.isUserInteractionEnabled = true
         imageView.frame = container.bounds
@@ -777,6 +786,11 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
 
             DispatchQueue.main.async {
                 self.addImageToContentPanel(image: image, x: x, y: y, scaleX: scaleX, scaleY: scaleY, rotation: rotation)
+                
+                if let lastContainer = self.contentPanel.subviews.last,
+                   let loadedImageView = lastContainer.subviews.first as? ScrapbookImageView {
+                    loadedImageView.firebaseURL = urlString
+                }
             }
         }.resume()
     }
@@ -885,6 +899,15 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         imageView.transform = imageView.transform.scaledBy(x: gesture.scale, y: gesture.scale)
         gesture.scale = 1.0
     }
+    
+    @objc private func handleImageTap(_ sender: UITapGestureRecognizer) {
+        if let imageView = sender.view as? ScrapbookImageView,
+           let urlString = imageView.firebaseURL {
+            print("Tapped image URL: \(urlString)")
+        } else {
+            print("Tapped image has no stored URL.")
+        }
+    }
 
     private func setBackgroundImage(image: UIImage) {
         guard let panel = contentPanel else { return }
@@ -983,61 +1006,40 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
 
     // MARK: - Gesture Handling
     @objc private func handleImagePan(_ gesture: UIPanGestureRecognizer) {
-        guard let imageView = gesture.view else { return }
-        let translation = gesture.translation(in: contentPanel)
-        imageView.center = CGPoint(x: imageView.center.x + translation.x, y: imageView.center.y + translation.y)
-        gesture.setTranslation(.zero, in: contentPanel)
+        guard let movingView = gesture.view, let panel = contentPanel else { return }
+        
+        let translation = gesture.translation(in: panel)
+        
+        var newCenter = CGPoint(x: movingView.center.x + translation.x,
+                                 y: movingView.center.y + translation.y)
+        
+        // Define limits
+        let halfWidth = movingView.bounds.width / 2
+        let halfHeight = movingView.bounds.height / 2
+        
+        let paddingTop: CGFloat = 20  // because titleContainer is overlapping -20
+        let paddingBottom: CGFloat = 20 // because toolbar overlap + constant 20
+        let minX = halfWidth
+        let maxX = panel.bounds.width - halfWidth
+        let minY = halfHeight + paddingTop
+        let maxY = panel.bounds.height - halfHeight - paddingBottom
+        
+        // Clamp within bounds
+        newCenter.x = max(minX, min(newCenter.x, maxX))
+        newCenter.y = max(minY, min(newCenter.y, maxY))
+        
+        movingView.center = newCenter
+        gesture.setTranslation(.zero, in: panel)
     }
 
     // MARK: - Button Actions
     @objc private func frameTapped() {
-//        GoogleLensService.searchWithGoogleLens() { result in
-//            DispatchQueue.main.async {
-//                print(result)
-//                switch result {
-//                case .success(let matches):
-//                    print(matches)
-//                case .failure(let error):
-//                    print("error: \(error.localizedDescription)")
-//                }
-//            }
-//        }
     }
     @objc private func chatTapped() {
         let chatView = ChatbotViewController()
         chatView.modalPresentationStyle = .overCurrentContext
         chatView.modalTransitionStyle = .crossDissolve
         present(chatView, animated: true, completion: nil)
-    }
-
-    //able to put any link from products
-    private func getRelatedProducts(from image: UIImage){
-       // let dynamicImageUrl = "https://firebasestorage.googleapis.com/v0/b/goshsha-f7fc1.firebasestorage.app/o/purepng.com-lipstickclothinglipstickfashion-objects-girl-makeup-stick-sexy-beauty-accessory-lipstick-lip-lips-cosmetics-631522935839vcyto.png?alt=media&token=d51d24b8-8fd6-4b00-9698-ca3846f0129e"
-       // GoogleLensService.searchWithGoogleLens(url: dynamicImageUrl) { result in
-       //     switch result {
-       //         case .success(let data):
-       //             print("Search success:", data)
-       //         case .failure(let error):
-       //             print("Search failed:", error)
-        //    }
-       // }
-       detecObjects(in: image) { [weak self] objects in
-           guard let firstObject = objects.first else {
-               print("No objects found")
-               return
-           }
-
-           if let cropped = self?.crop(image: image, to: firstObject.boundingBox){
-              self?.uploadToFirebase(image: cropped) { reult in
-                  switch result {
-                    case .success(let imageUrl):
-                        self?.searchWithLens(using: imageUrl)
-                    case .failure(let error):
-                        print("Upload failed:", error)
-                  }
-              }
-           }
-       }
     }
 
     private func uploadToFirebase(image: UIImage, completion: @escaping (Result<String, Error>) -> Void){
@@ -1058,44 +1060,6 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
             }
         }
     }
-
-    private func searchWithLens(using imageUrl: String) {
-        GoogleLensService.searchWithGoogleLens(url: imageUrl) { result in
-            switch result {
-                case .success(let data):
-                    print("Search success:", data)
-                case .failure(let error):
-                    print("Search failed:", error)
-            }
-        }
-    }
-
-    private func detectObjects(in image: UIImage, completion: @escaping ([VNRecognizedObjectObservation]) -> Void) {
-        guard let cgImage = image,cgImage else { return }
-
-        let request = VNRecognizeObjectsRequest { request, error in
-            let results = (request.results as? [VNRecognizedObjectObservation]) ?? []
-            completion(results)
-        }
-
-        let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
-        try? handler.perform([request])
-    }
-
-    private func crop(image: UIImage, to rect: CGRect) -> UIImage? {
-        guard let cgImage = image.cgImage else { return nil }
-        let width = CGFloat(cgImage.width)
-        let height = CGFloat(cgImage.height)
-        let scaledRect - CGRect(x: rect.origin.x * width,
-                                y: (1 - rect.origin.y - rect.height) * height,
-                                width: rect.width * width,
-                                height: rect.height * height)
-        if let croppedCG = cgImage.cropping(to: scaledRect){
-            return UIImage(cgImage: croppedCG)
-        }
-        return nil
-    }
-    
 }
 
 extension NewScrapbook: UIColorPickerViewControllerDelegate{

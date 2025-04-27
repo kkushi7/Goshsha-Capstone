@@ -6,6 +6,8 @@
 //
 
 import UIKit
+import FirebaseAuth
+import FirebaseStorage
 
 class FindMatchViewController: UIViewController, UICollectionViewDelegate, UICollectionViewDataSource {
     
@@ -13,13 +15,15 @@ class FindMatchViewController: UIViewController, UICollectionViewDelegate, UICol
     private var titleLabel: UILabel! // Title label
     private var gridView: UICollectionView! // Collection view for the grid of images
     private var doneButton: UIButton!
+    private var firstSelectedImage: UIImage?
+    private var secondSelectedImage: UIImage?
 
-    // Sample data for images (replace this with Firebase data later)
-    private var productImages: [UIImage] = [UIImage(named: "goshi"), UIImage(named: "goshi"), UIImage(named: "goshi"), UIImage(named: "goshi"), UIImage(named: "goshi"), UIImage(named: "goshi"), UIImage(named: "goshi"), UIImage(named: "goshi")].compactMap { $0 }
+    private var productImages: [UIImage] = []
 
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
+        loadImagesFromFirebase()
     }
     
     private func setupUI() {
@@ -27,7 +31,7 @@ class FindMatchViewController: UIViewController, UICollectionViewDelegate, UICol
         
         // Title Label
         titleLabel = UILabel()
-        titleLabel.text = "Select the first product"
+        titleLabel.text = "Select the first image"
         titleLabel.font = UIFont.systemFont(ofSize: 24, weight: .bold)
         titleLabel.textAlignment = .center
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -40,11 +44,18 @@ class FindMatchViewController: UIViewController, UICollectionViewDelegate, UICol
             titleLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor)
         ])
         
-        // Create a grid view for images
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .vertical
-        layout.itemSize = CGSize(width: 300, height: 300) // Customize item size
-        layout.sectionInset = UIEdgeInsets(top: 20, left: 20, bottom: 20, right: 20)
+
+        let spacing: CGFloat = 10
+        let itemsPerRow: CGFloat = 2
+        let totalSpacing = (itemsPerRow + 1) * spacing
+        let itemWidth = (view.bounds.width - totalSpacing) / itemsPerRow
+
+        layout.itemSize = CGSize(width: itemWidth, height: itemWidth)
+        layout.minimumInteritemSpacing = spacing
+        layout.minimumLineSpacing = spacing
+        layout.sectionInset = UIEdgeInsets(top: spacing, left: spacing, bottom: spacing, right: spacing)
 
         gridView = UICollectionView(frame: .zero, collectionViewLayout: layout)
         gridView.backgroundColor = .clear
@@ -72,6 +83,8 @@ class FindMatchViewController: UIViewController, UICollectionViewDelegate, UICol
         doneButton.translatesAutoresizingMaskIntoConstraints = false
         doneButton.addTarget(self, action: #selector(doneButtonTapped), for: .touchUpInside)
         doneButton.titleLabel?.font = UIFont.systemFont(ofSize: 24, weight: .bold)
+        doneButton.isEnabled = false
+        doneButton.alpha = 0.5
         view.addSubview(doneButton)
         
         // Constraints for the Done button
@@ -81,6 +94,48 @@ class FindMatchViewController: UIViewController, UICollectionViewDelegate, UICol
             doneButton.heightAnchor.constraint(equalToConstant: 50),
             doneButton.widthAnchor.constraint(equalToConstant: 300)
         ])
+    }
+    
+    private func loadImagesFromFirebase() {
+        guard let uid = Auth.auth().currentUser?.uid else {
+            print("User not logged in.")
+            return
+        }
+        
+        let storageRef = Storage.storage().reference().child("scrapbook_photos/\(uid)")
+        
+        storageRef.listAll { (result, error) in
+            if let error = error {
+                print("Error listing files: \(error.localizedDescription)")
+                return
+            }
+            
+            guard let items = result?.items else {
+                print("No images found.")
+                return
+            }
+            
+            let dispatchGroup = DispatchGroup()
+            var loadedImages: [UIImage] = []
+            
+            for item in items {
+                dispatchGroup.enter()
+                item.getData(maxSize: 5 * 1024 * 1024) { data, error in
+                    if let data = data, let image = UIImage(data: data) {
+                        loadedImages.append(image)
+                    } else {
+                        print("Failed to load image from \(item.fullPath)")
+                    }
+                    dispatchGroup.leave()
+                }
+            }
+            
+            dispatchGroup.notify(queue: .main) {
+                self.productImages = loadedImages
+                self.gridView.reloadData()
+                print("Loaded \(loadedImages.count) images from Firebase!")
+            }
+        }
     }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
@@ -95,25 +150,48 @@ class FindMatchViewController: UIViewController, UICollectionViewDelegate, UICol
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        // Toggle selection for the product
         if selectedProductIndex == indexPath {
             selectedProductIndex = nil
         } else {
             selectedProductIndex = indexPath
         }
         
+        // Done button enabled ONLY if something is selected
+        doneButton.isEnabled = selectedProductIndex != nil
+        doneButton.alpha = selectedProductIndex != nil ? 1.0 : 0.5
+
         collectionView.reloadData()
     }
     
     // Done button action
     @objc private func doneButtonTapped() {
-        if titleLabel.text == "Select the first product" {
+        guard let selectedIndex = selectedProductIndex else {
+            print("No image selected.")
+            return
+        }
+
+        if titleLabel.text == "Select the first image" {
+            // Save the first selected image
+            firstSelectedImage = productImages[selectedIndex.item]
+
+            // Remove it from productImages
+            productImages.remove(at: selectedIndex.item)
+
+            // Update title to select second
+            titleLabel.text = "Select the second image"
+
+            // Reset selected index
             selectedProductIndex = nil
-            titleLabel.text = "Select the second product"
-            // After select first item
-        } else{
+            doneButton.isEnabled = false
+            doneButton.alpha = 0.5
+
+            // Reload grid
+            gridView.reloadData()
+            
+        } else if titleLabel.text == "Select the second image" {
+            // Save the second selected image
+            secondSelectedImage = productImages[selectedIndex.item]
             dismiss(animated: true, completion: nil)
-            // Shade match api
         }
     }
 }
