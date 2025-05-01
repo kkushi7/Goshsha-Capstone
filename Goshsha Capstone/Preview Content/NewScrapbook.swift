@@ -958,7 +958,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
     private func areHexSimilar(_ hex1: String, _ hex2: String, tolerance: CGFloat = 50.0) -> Bool{
         guard let rgb1 = hexToRGB(hex1),
               let rgb2 = hexToRGB(hex2) else{
-           return false    
+           return -1    
         }
 
         let distance = sqrt(
@@ -967,7 +967,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
             pow(CGFloat(rgb1.b - rgb2.b), 2)
         )
 
-        return distance <= tolerance
+        return Int(distance.rounded())
 
     }
 
