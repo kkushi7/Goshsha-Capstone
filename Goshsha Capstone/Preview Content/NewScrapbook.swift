@@ -955,22 +955,6 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         return String(format: "RGB(%d, %d, %d)", Int(red * 255), Int(green * 255), Int(blue * 255))
     }
 
-    private func areHexSimilar(_ hex1: String, _ hex2: String, tolerance: CGFloat = 50.0) -> Bool{
-        guard let rgb1 = hexToRGB(hex1),
-              let rgb2 = hexToRGB(hex2) else{
-           return -1    
-        }
-
-        let distance = sqrt(
-            pow(CGFloat(rgb1.r - rgb2.r), 2) +
-            pow(CGFloat(rgb1.g - rgb2.g), 2) +
-            pow(CGFloat(rgb1.b - rgb2.b), 2)
-        )
-
-        return Int(distance.rounded())
-
-    }
-
     private func hexToRGB(_ hex: String) -> (r: Int, g: Int, b: Int)? {
         var hexString = hex.trimmingCharacters(in: .whitespacesAndNewlines)
             .replacingOccurrences(of: "#", with: "")

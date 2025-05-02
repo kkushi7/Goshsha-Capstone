@@ -6,12 +6,15 @@
 //
 
 import UIKit
+import FirebaseStorage
 
-class ChatbotViewController: UIViewController {
+class ChatbotViewController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     
     var helpBox: UIView?
     var findMatch: Bool = false
     var buyProduct: Bool = false
+    private var baseHexColor: String?
+    private var selectedMatchView: ScrapbookImageView?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -64,24 +67,62 @@ class ChatbotViewController: UIViewController {
             goshiImageView.heightAnchor.constraint(equalToConstant: 300),
         ])
     }
+    
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
+        picker.dismiss(animated: true)
+
+        if let image = info[.originalImage] as? UIImage {
+            // Present color selection for face image
+            presentColorSelection(for: image) { hex in
+                self.baseHexColor = hex
+                self.startImageSelectionFlow()
+            }
+        }
+    }
+    
+    private func presentColorSelection(for image: UIImage, completion: @escaping (String) -> Void) {
+        let vc = ColorSelectionViewController()
+        vc.image = image
+        vc.onColorSelected = completion
+        vc.modalPresentationStyle = .fullScreen
+        present(vc, animated: true)
+    }
+    
+    private func startImageSelectionFlow() {
+        let findMatchVC = FindMatchViewController()
+        findMatchVC.modalPresentationStyle = .fullScreen
+
+        findMatchVC.onMatchAnalysisComplete = { hex1, hex2, view1, view2 in
+            self.shadeAnalyzeBot(hex1: hex1, hex2: hex2, view1: view1, view2: view2)
+        }
+
+        self.present(findMatchVC, animated: true)
+    }
 
     @objc private func dismissChatbot() {
         if !findMatch {
             dismiss(animated: true)
         } else if !buyProduct {
             presentFindMatch()
-            shadeAnalyzeBot()
             buyProduct = true
         } else {
             updateHelpBox(
                 with: "Would you like to buy this product?",
                 fontSize: 18,
                 buttons: [
-                    ("YES! PLEASE!", #selector(buyConfirmed)),
+                    ("YES! PLEASE!", #selector(buyConfirmedTapped)),
                     ("No Thank you!", #selector(buyDeclined))
                 ]
             )
         }
+    }
+    
+    @objc private func buyConfirmedTapped() {
+        guard let imageView = selectedMatchView else {
+            print("Error: No selected image to confirm.")
+            return
+        }
+        buyConfirmed(for: imageView)
     }
 
     @objc private func findMatchTapped() {
@@ -93,13 +134,50 @@ class ChatbotViewController: UIViewController {
         updateHelpBox(with: "Let me find that for you!", fontSize: 30)
     }
 
-    @objc private func buyConfirmed() {
+    @objc private func buyConfirmed(for imageView: ScrapbookImageView) {
         updateHelpBox(with: "Great! Redirecting you now...", fontSize: 26)
-        
-        let selectedImageURL = "https://firebasestorage.googleapis.com/v0/b/goshsha-f7fc1.firebasestorage.app/o/F3D3A61D-5DC7-49A4-B562-FE35B72FD10D.jpg?alt=media&token=9bfecce3-4386-4262-be74-b5b762811cf0"
-        let url = "https://firebasestorage.googleapis.com/v0/b/goshsha-f7fc1.firebasestorage.app/o/Screenshot%202025-04-26%20at%209.37.46%E2%80%AFPM.png?alt=media&token=a782fc99-0572-4880-b786-16bde4ea5ae7"
-        getRelatedProducts(url: selectedImageURL)
-//        getRelatedProducts(url: url)
+
+        guard let image = imageView.image,
+              let imageData = image.jpegData(compressionQuality: 0.9) else {
+            print("Missing image data")
+            return
+        }
+
+        let filename = "\(UUID().uuidString).jpg"
+        let storageRef = Storage.storage().reference().child(filename)
+
+        let metadata = StorageMetadata()
+        metadata.contentType = "image/jpeg"
+
+        // Upload to root
+        storageRef.putData(imageData, metadata: metadata) { _, error in
+            if let error = error {
+                print("Upload error:", error.localizedDescription)
+                return
+            }
+
+            // Get download URL
+            storageRef.downloadURL { url, error in
+                guard let url = url else {
+                    print("Failed to get download URL:", error?.localizedDescription ?? "")
+                    return
+                }
+
+                // Use for Google Lens
+                self.getRelatedProducts(url: url.absoluteString)
+
+                // Delete after a delay to let Google Lens process
+                DispatchQueue.main.asyncAfter(deadline: .now() + 10) {
+                    storageRef.delete { error in
+                        if let error = error {
+                            print("Failed to delete uploaded image:", error.localizedDescription)
+                        } else {
+                            print("Temporary image deleted successfully.")
+                        }
+                    }
+                }
+            }
+        }
     }
 
     @objc private func buyDeclined() {
@@ -141,14 +219,65 @@ class ChatbotViewController: UIViewController {
         }
     }
 
-    private func shadeAnalyzeBot() {
-        updateHelpBox(with: "Between these two, I think the second one is your tidal match!", fontSize: 26)
+    private func shadeAnalyzeBot(hex1: String, hex2: String, view1: ScrapbookImageView, view2: ScrapbookImageView) {
+        let base = baseHexColor ?? "#C68642"
+        let diff1 = hexColorDifference(hex1, base)
+        let diff2 = hexColorDifference(hex2, base)
+
+        let betterView = diff1 < diff2 ? view1 : view2
+        self.selectedMatchView = betterView
+
+        let better = diff1 < diff2 ? "first" : "second"
+        updateHelpBox(with: "Between these two, I think the \(better) one is your tidal match!", fontSize: 26)
     }
 
     private func presentFindMatch() {
+        presentCameraForBaseTone()
         let findMatchVC = FindMatchViewController()
         findMatchVC.modalPresentationStyle = .fullScreen
+
+        // Set the callback to analyze and update bot
+        findMatchVC.onMatchAnalysisComplete = { hex1, hex2, view1, view2 in
+            self.shadeAnalyzeBot(hex1: hex1, hex2: hex2, view1: view1, view2: view2)
+        }
         present(findMatchVC, animated: true)
+    }
+    
+    private func presentCameraForBaseTone() {
+        let picker = UIImagePickerController()
+        picker.sourceType = .camera
+        picker.delegate = self
+        present(picker, animated: true)
+    }
+
+    private func hexColorDifference(_ hex1: String, _ hex2: String) -> Int {
+        func hexToRGB(_ hex: String) -> (r: Int, g: Int, b: Int)? {
+            var hexString = hex.trimmingCharacters(in: .whitespacesAndNewlines)
+                .replacingOccurrences(of: "#", with: "")
+
+            if hexString.count == 3 {
+                hexString = hexString.map { "\($0)\($0)" }.joined()
+            }
+
+            guard hexString.count == 6,
+                  let hexValue = Int(hexString, radix: 16) else { return nil }
+
+            let r = (hexValue >> 16) & 0xFF
+            let g = (hexValue >> 8) & 0xFF
+            let b = hexValue & 0xFF
+
+            return (r, g, b)
+        }
+
+        guard let rgb1 = hexToRGB(hex1), let rgb2 = hexToRGB(hex2) else { return Int.max }
+
+        let distance = sqrt(
+            pow(CGFloat(rgb1.r - rgb2.r), 2) +
+            pow(CGFloat(rgb1.g - rgb2.g), 2) +
+            pow(CGFloat(rgb1.b - rgb2.b), 2)
+        )
+
+        return Int(distance.rounded())
     }
 
     private func updateHelpBox(with text: String, fontSize: CGFloat, buttons: [(String, Selector)] = []) {
