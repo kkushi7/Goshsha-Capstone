@@ -66,5 +66,7 @@
 	<array>
 		<string>Poppins-Bold.ttf</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>We need access to your camera to take a base tone photo.</string>
 </dict>
 </plist>

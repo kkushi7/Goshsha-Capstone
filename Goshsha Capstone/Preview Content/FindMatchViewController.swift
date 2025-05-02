@@ -15,10 +15,13 @@ class FindMatchViewController: UIViewController, UICollectionViewDelegate, UICol
     private var titleLabel: UILabel! // Title label
     private var gridView: UICollectionView! // Collection view for the grid of images
     private var doneButton: UIButton!
-    private var firstSelectedImage: UIImage?
-    private var secondSelectedImage: UIImage?
+    private var firstSelectedImage: ScrapbookImageView?
+    private var secondSelectedImage: ScrapbookImageView?
+    private var firstHex: String?
+    private var secondHex: String?
+    var onMatchAnalysisComplete: ((String, String, ScrapbookImageView, ScrapbookImageView) -> Void)?
 
-    private var productImages: [UIImage] = []
+    private var productImages: [ScrapbookImageView] = []
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -96,6 +99,39 @@ class FindMatchViewController: UIViewController, UICollectionViewDelegate, UICol
         ])
     }
     
+    private func startColorSelectionFlow(image1: UIImage, image2: UIImage) {
+        presentColorSelection(for: image1) { hex1 in
+            self.firstHex = hex1
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                self.presentColorSelection(for: image2) { hex2 in
+                    self.secondHex = hex2
+                    guard let view1 = self.firstSelectedImage,
+                          let view2 = self.secondSelectedImage else { return }
+
+                    self.onMatchAnalysisComplete?(hex1, hex2, view1, view2)
+                    self.dismiss(animated: true)
+                }
+            }
+        }
+    }
+
+    private func presentColorSelection(for image: UIImage, completion: @escaping (String) -> Void) {
+        let vc = ColorSelectionViewController()
+        vc.image = image
+        vc.onColorSelected = completion
+        vc.modalPresentationStyle = .fullScreen
+        present(vc, animated: true)
+    }
+
+    private func showResultAlert(message: String) {
+        let alert = UIAlertController(title: "Match Result", message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "Got it!", style: .default) { _ in
+            self.dismiss(animated: true)
+        })
+        present(alert, animated: true)
+    }
+    
     private func loadImagesFromFirebase() {
         guard let uid = Auth.auth().currentUser?.uid else {
             print("User not logged in.")
@@ -116,24 +152,29 @@ class FindMatchViewController: UIViewController, UICollectionViewDelegate, UICol
             }
             
             let dispatchGroup = DispatchGroup()
-            var loadedImages: [UIImage] = []
-            
+            var loadedImageViews: [ScrapbookImageView] = []
+
             for item in items {
                 dispatchGroup.enter()
                 item.getData(maxSize: 5 * 1024 * 1024) { data, error in
                     if let data = data, let image = UIImage(data: data) {
-                        loadedImages.append(image)
+                        let imageView = ScrapbookImageView(image: image)
+                        item.downloadURL { url, _ in
+                            imageView.firebaseURL = url?.absoluteString
+                            loadedImageViews.append(imageView)
+                            dispatchGroup.leave()
+                        }
                     } else {
                         print("Failed to load image from \(item.fullPath)")
+                        dispatchGroup.leave()
                     }
-                    dispatchGroup.leave()
                 }
             }
             
             dispatchGroup.notify(queue: .main) {
-                self.productImages = loadedImages
+                self.productImages = loadedImageViews
                 self.gridView.reloadData()
-                print("Loaded \(loadedImages.count) images from Firebase!")
+                print("Loaded \(loadedImageViews.count) images from Firebase!")
             }
         }
     }
@@ -144,8 +185,8 @@ class FindMatchViewController: UIViewController, UICollectionViewDelegate, UICol
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ProductImageCell", for: indexPath) as! ProductImageCell
-        let image = productImages[indexPath.row]
-        cell.configure(with: image, isSelected: selectedProductIndex == indexPath)
+        let imageView = productImages[indexPath.row]
+        cell.configure(with: imageView.image ?? UIImage(), isSelected: selectedProductIndex == indexPath)
         return cell
     }
     
@@ -170,28 +211,25 @@ class FindMatchViewController: UIViewController, UICollectionViewDelegate, UICol
             return
         }
 
-        if titleLabel.text == "Select the first image" {
-            // Save the first selected image
-            firstSelectedImage = productImages[selectedIndex.item]
+        let selectedView = productImages[selectedIndex.item]
 
-            // Remove it from productImages
+        if titleLabel.text == "Select the first image" {
+            firstSelectedImage = selectedView
             productImages.remove(at: selectedIndex.item)
 
-            // Update title to select second
             titleLabel.text = "Select the second image"
-
-            // Reset selected index
             selectedProductIndex = nil
             doneButton.isEnabled = false
             doneButton.alpha = 0.5
-
-            // Reload grid
             gridView.reloadData()
             
         } else if titleLabel.text == "Select the second image" {
-            // Save the second selected image
-            secondSelectedImage = productImages[selectedIndex.item]
-            dismiss(animated: true, completion: nil)
+            secondSelectedImage = selectedView
+
+            guard let first = firstSelectedImage,
+                  let second = secondSelectedImage else { return }
+
+            startColorSelectionFlow(image1: first.image!, image2: second.image!)
         }
     }
 }
