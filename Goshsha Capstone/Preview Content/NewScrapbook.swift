@@ -27,7 +27,6 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         loadStickers()
         loadPhotos()
         loadBackground()
-        setupColorPreviewBubble()
     }
 
     // MARK: - UI Setup
@@ -113,24 +112,63 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         toolbar.clipsToBounds = true
         
         toolbar.items = [
-            createToolbarButton(#selector(stickerButton), "sticker"),
             .flexibleSpace(),
-            createToolbarButton(#selector(openColorPicker), "bg"),
+            createLabeledToolbarItem(imageName: "sticker", title: "STICKERS", action: #selector(stickerButton)),
             .flexibleSpace(),
-            createToolbarButton(#selector(cameraTapped), "pics"),
+            createLabeledToolbarItem(imageName: "bg", title: "BACKGROUND", action: #selector(openColorPicker)),
             .flexibleSpace(),
-            createToolbarButton(#selector(frameTapped), "border"),
-            .flexibleSpace(),
-            createToolbarButton(#selector(toggleDeleteMode), "erase")
+            createLabeledToolbarItem(imageName: "image", title: "IMAGES", action: #selector(cameraTapped)),
+            .flexibleSpace()
         ]
         
         return toolbar
     }
 
-    private func createToolbarButton(_ action: Selector, _ imageName: String) -> UIBarButtonItem {
-        let image = UIImage(named: imageName)?.withRenderingMode(.alwaysOriginal)
-        let button = UIBarButtonItem(image: image, style: .plain, target: self, action: action)
-        return button
+    private func createLabeledToolbarItem(imageName: String, title: String, action: Selector) -> UIBarButtonItem {
+        // Frame
+        let outerView = UIView(frame: CGRect(x: 0, y: 0, width: 80, height: 90))
+        outerView.isUserInteractionEnabled = true
+
+        // Gesture recognizer
+        let tap = UITapGestureRecognizer(target: self, action: action)
+        outerView.addGestureRecognizer(tap)
+
+        // Icon
+        let imageView = UIImageView(image: UIImage(named: imageName)?.withRenderingMode(.alwaysOriginal))
+        imageView.contentMode = .scaleAspectFit
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        imageView.widthAnchor.constraint(equalToConstant: 36).isActive = true
+        imageView.heightAnchor.constraint(equalToConstant: 36).isActive = true
+
+        // Label
+        let label = UILabel()
+        label.text = title
+        label.font = UIFont(name: "RobotoFlex", size: 24)
+        label.textAlignment = .center
+        label.textColor = .white
+        label.numberOfLines = 1
+        label.lineBreakMode = .byTruncatingTail
+        label.adjustsFontSizeToFitWidth = true
+        label.minimumScaleFactor = 0.6
+        label.translatesAutoresizingMaskIntoConstraints = false
+
+        // Stack
+        let stack = UIStackView(arrangedSubviews: [imageView, label])
+        stack.axis = .vertical
+        stack.alignment = .center
+        stack.spacing = 4
+        stack.translatesAutoresizingMaskIntoConstraints = false
+
+        outerView.addSubview(stack)
+
+        NSLayoutConstraint.activate([
+            stack.centerXAnchor.constraint(equalTo: outerView.centerXAnchor),
+            stack.centerYAnchor.constraint(equalTo: outerView.centerYAnchor),
+            stack.widthAnchor.constraint(lessThanOrEqualTo: outerView.widthAnchor),
+            stack.heightAnchor.constraint(lessThanOrEqualTo: outerView.heightAnchor)
+        ])
+
+        return UIBarButtonItem(customView: outerView)
     }
 
     private func setupConstraints(titleContainer: UIView, returnButton: UIButton, titleLabel: UILabel, saveButton: UIButton, chatButton: UIButton, toolbar: UIToolbar) {
@@ -400,12 +438,12 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         guard let panel = contentPanel else { return }
         let container = UIView()
         container.isUserInteractionEnabled = true
+        container.clipsToBounds = false
 
         let imageView = ScrapbookImageView(image: image)
         imageView.contentMode = .scaleAspectFit
         imageView.isUserInteractionEnabled = true
         imageView.sizeToFit()
-
         imageView.layer.cornerRadius = 20
         imageView.clipsToBounds = true
 
@@ -430,24 +468,41 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         let pinchGesture = UIPinchGestureRecognizer(target: self, action: #selector(handleImagePinch(_:)))
         container.addGestureRecognizer(pinchGesture)
         
-        let longPress = UILongPressGestureRecognizer(target: self, action: #selector(showBubbleOnImage(_:)))
+        let longPress = UILongPressGestureRecognizer(target: self, action: #selector(showDeleteButton(_:)))
         imageView.addGestureRecognizer(longPress)
         
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleImageTap(_:)))
         imageView.isUserInteractionEnabled = true
         imageView.addGestureRecognizer(tapGesture)
 
-        // Delete button setup
-        let deleteButton = UIButton(type: .system)
-        deleteButton.setTitle("✖", for: .normal)
+        let deleteButton = UIButton(type: .custom)
+        let deleteImage = UIImage(named: "delete")
+
+        deleteButton.setImage(deleteImage, for: .normal)
         deleteButton.isHidden = true
-        deleteButton.backgroundColor = .red
-        deleteButton.setTitleColor(.white, for: .normal)
-        deleteButton.layer.cornerRadius = 10
-        deleteButton.frame = CGRect(x: container.frame.width - 10, y: -10, width: 20, height: 20)
         deleteButton.addTarget(self, action: #selector(deleteItem(_:)), for: .touchUpInside)
 
+        let buttonSize: CGFloat = 50
+        deleteButton.frame = CGRect(
+            x: container.bounds.width - buttonSize * 0.9,
+            y: -buttonSize * 0.1,
+            width: buttonSize,
+            height: buttonSize
+        )
         container.addSubview(deleteButton)
+        
+        let frameButton = UIButton(type: .custom)
+        let frameImage = UIImage(named: "frame")
+        frameButton.setImage(frameImage, for: .normal)
+        frameButton.isHidden = true
+        frameButton.addTarget(self, action: #selector(applyFrame(_:)), for: .touchUpInside)
+        frameButton.frame = CGRect(
+            x: deleteButton.frame.minX - buttonSize * 0.65,
+            y: deleteButton.frame.origin.y,
+            width: buttonSize,
+            height: buttonSize
+        )
+        container.addSubview(frameButton)
 
         // Center the container inside the panel
         if x == nil || y == nil {
@@ -461,87 +516,20 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         
     }
     
-    @objc private func showBubbleOnImage(_ gesture: UILongPressGestureRecognizer) {
-        guard let imageView = gesture.view as? UIImageView,
-              let image = imageView.image else { return }
-
-        if gesture.state == .began {
-            eyedropperTargetImageView = imageView
-
-            let pointInImage = gesture.location(in: imageView)
-            let globalPoint = imageView.convert(pointInImage, to: view)
-
-            colorPreview.center = globalPoint
-            colorPreview.isHidden = false
-
-            colorInfoLabel.frame = CGRect(x: globalPoint.x - 40, y: globalPoint.y + 30, width: 80, height: 40)
-            colorInfoLabel.isHidden = false
-
-            updateBubbleColor(at: pointInImage)
-        }
+    @objc private func applyFrame(_ sender: UIButton) {
+        print("Frame button tapped")
     }
     
-    @objc private func dragBubble(_ gesture: UIPanGestureRecognizer) {
-        guard let imageView = eyedropperTargetImageView,
-              let image = imageView.image,
-              let bubble = gesture.view else { return }
+    @objc private func showDeleteButton(_ gesture: UILongPressGestureRecognizer) {
+        guard gesture.state == .began,
+              let imageView = gesture.view as? ScrapbookImageView,
+              let container = imageView.superview else { return }
 
-        let translation = gesture.translation(in: view)
-
-        // Move the bubble
-        bubble.center = CGPoint(x: bubble.center.x + translation.x, y: bubble.center.y + translation.y)
-        gesture.setTranslation(.zero, in: view)
-
-        // Move the label below the bubble
-        colorInfoLabel.frame = CGRect(x: bubble.center.x - 40, y: bubble.center.y + 30, width: 80, height: 40)
-
-        // Convert bubble's center to point inside imageView
-        let pointInImage = view.convert(bubble.center, to: imageView)
-
-        // Update color
-        if let color = getPixelColor(from: image, at: pointInImage, in: imageView) {
-            colorPreview.backgroundColor = color
-            colorInfoLabel.text = "\(colorToHex(color))\n\(colorToRGBString(color))"
+        for subview in container.subviews {
+            if let button = subview as? UIButton {
+                button.isHidden.toggle()
+            }
         }
-    }
-    
-    private func updateBubbleColor(at point: CGPoint) {
-        guard let imageView = eyedropperTargetImageView,
-              let image = imageView.image else { return }
-
-        if let color = getPixelColor(from: image, at: point, in: imageView) {
-            colorPreview.backgroundColor = color
-            colorInfoLabel.text = "\(colorToHex(color))\n\(colorToRGBString(color))"
-        }
-    }
-    
-    private func getPixelColor(from image: UIImage, at point: CGPoint, in imageView: UIImageView) -> UIColor? {
-        guard let cgImage = image.cgImage else { return nil }
-
-        // Calculate the pixel in the image coordinate system
-        let imageSize = image.size
-        let imageViewSize = imageView.bounds.size
-
-        let scaleX = imageSize.width / imageViewSize.width
-        let scaleY = imageSize.height / imageViewSize.height
-
-        let x = Int(point.x * scaleX)
-        let y = Int(point.y * scaleY)
-
-        guard x >= 0, y >= 0, x < cgImage.width, y < cgImage.height else { return nil }
-
-        let pixelData = cgImage.dataProvider?.data
-        guard let data = CFDataGetBytePtr(pixelData) else { return nil }
-
-        let bytesPerPixel = 4
-        let pixelIndex = ((cgImage.width * y) + x) * bytesPerPixel
-
-        let r = CGFloat(data[pixelIndex]) / 255.0
-        let g = CGFloat(data[pixelIndex + 1]) / 255.0
-        let b = CGFloat(data[pixelIndex + 2]) / 255.0
-        let a = CGFloat(data[pixelIndex + 3]) / 255.0
-
-        return UIColor(red: r, green: g, blue: b, alpha: a)
     }
     
     // get images url from firebase once stickers are made and inputted
@@ -714,28 +702,34 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         imageView.clipsToBounds = true
         imageView.accessibilityIdentifier = url
 
-        container.transform = CGAffineTransform(scaleX: scaleX, y: scaleY).rotated(by: rotation)
-
-        let deleteButton = UIButton(type: .system)
-        deleteButton.setTitle("✖", for: .normal)
+        // Delete button
+        let deleteButton = UIButton(type: .custom)
+        let deleteImage = UIImage(named: "delete")?.withRenderingMode(.alwaysOriginal)
+        deleteButton.setImage(deleteImage, for: .normal)
         deleteButton.isHidden = true
-        deleteButton.backgroundColor = .red
-        deleteButton.setTitleColor(.white, for: .normal)
-        deleteButton.layer.cornerRadius = 10
-        deleteButton.frame = CGRect(x: container.frame.width - 15, y: -10, width: 20, height: 20)
+        deleteButton.frame = CGRect(
+            x: container.bounds.width - 40,
+            y: -10,
+            width: 40,
+            height: 40
+        )
         deleteButton.addTarget(self, action: #selector(deleteItem(_:)), for: .touchUpInside)
 
+        // Add subviews
         container.addSubview(imageView)
         container.addSubview(deleteButton)
-
         panel.addSubview(container)
         panel.bringSubviewToFront(container)
 
+        // Gestures
         let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handleImagePan(_:)))
         container.addGestureRecognizer(panGesture)
 
         let pinchGesture = UIPinchGestureRecognizer(target: self, action: #selector(handleImagePinch(_:)))
         container.addGestureRecognizer(pinchGesture)
+
+        let longPressGesture = UILongPressGestureRecognizer(target: self, action: #selector(showDeleteButton(_:)))
+        imageView.addGestureRecognizer(longPressGesture)
     }
     
     private func loadPhotos() {
@@ -844,53 +838,6 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
             default:
                 print("Unknown background type: \(type)")
             }
-        }
-    }
-    
-    private func setupColorPreviewBubble() {
-        colorPreview = UIView(frame: CGRect(x: 50, y: 50, width: 40, height: 40))
-        colorPreview.layer.cornerRadius = 20
-        colorPreview.layer.borderColor = UIColor.white.cgColor
-        colorPreview.layer.borderWidth = 2
-        colorPreview.layer.shadowColor = UIColor.black.cgColor
-        colorPreview.layer.shadowOpacity = 0.3
-        colorPreview.layer.shadowRadius = 4
-        colorPreview.isHidden = true
-        colorPreview.isUserInteractionEnabled = true
-        view.addSubview(colorPreview)
-
-        let pan = UIPanGestureRecognizer(target: self, action: #selector(dragBubble(_:)))
-        colorPreview.addGestureRecognizer(pan)
-        
-        let dismissPress = UILongPressGestureRecognizer(target: self, action: #selector(hideBubble(_:)))
-        colorPreview.addGestureRecognizer(dismissPress)
-
-        colorInfoLabel = UILabel()
-        colorInfoLabel.font = UIFont.systemFont(ofSize: 12, weight: .bold)
-        colorInfoLabel.textColor = .white
-        colorInfoLabel.textAlignment = .center
-        colorInfoLabel.backgroundColor = UIColor.black.withAlphaComponent(0.7)
-        colorInfoLabel.layer.cornerRadius = 6
-        colorInfoLabel.layer.masksToBounds = true
-        colorInfoLabel.numberOfLines = 2
-        colorInfoLabel.isHidden = true
-        view.addSubview(colorInfoLabel)
-    }
-    
-    @objc private func hideBubble(_ gesture: UILongPressGestureRecognizer) {
-        UIView.animate(withDuration: 0.2) {
-            self.colorPreview.alpha = 0
-            self.colorInfoLabel.alpha = 0
-        } completion: { _ in
-            self.colorPreview.isHidden = true
-            self.colorInfoLabel.isHidden = true
-            self.colorPreview.alpha = 1
-            self.colorInfoLabel.alpha = 1
-        }
-        if gesture.state == .began {
-            colorPreview.isHidden = true
-            colorInfoLabel.isHidden = true
-            eyedropperTargetImageView = nil
         }
     }
 
