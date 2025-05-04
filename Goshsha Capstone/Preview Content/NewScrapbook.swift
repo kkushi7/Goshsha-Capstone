@@ -19,6 +19,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
     private var eyedropperTargetImageView: UIImageView?
     private var colorPreview: UIView!
     private var colorInfoLabel: UILabel!
+    private var dismissOverlay: UIView?
     let db = Firestore.firestore();
 
     override func viewDidLoad() {
@@ -284,6 +285,10 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
                             print("Error saving scrapbook: \(error.localizedDescription)")
                         } else {
                             print("Scrapbook saved successfully!")
+                            
+                            let alert = UIAlertController(title: "Saved", message: "Your scrapbook has been saved!", preferredStyle: .alert)
+                            alert.addAction(UIAlertAction(title: "OK", style: .default))
+                            self.present(alert, animated: true)
                         }
                     }
                 }
@@ -541,23 +546,49 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
     private func showStickerPanel() {
         if stickerPanel != nil { return }
 
+        // Create transparent dismiss overlay
+        let overlay = UIView()
+        overlay.backgroundColor = .clear
+        overlay.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(overlay)
+        dismissOverlay = overlay
+
+        let tap = UITapGestureRecognizer(target: self, action: #selector(hideStickerPanel))
+        overlay.addGestureRecognizer(tap)
+
+        NSLayoutConstraint.activate([
+            overlay.topAnchor.constraint(equalTo: view.topAnchor),
+            overlay.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            overlay.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            overlay.trailingAnchor.constraint(equalTo: view.trailingAnchor)
+        ])
+
+        // Add the sticker panel
         stickerPanel = UIScrollView()
         stickerPanel.backgroundColor = UIColor(white: 0.9, alpha: 1)
         stickerPanel.layer.cornerRadius = 10
         stickerPanel.translatesAutoresizingMaskIntoConstraints = false
         stickerPanel.showsHorizontalScrollIndicator = false
         stickerPanel.isScrollEnabled = true
-        
-        view.addSubview(stickerPanel)
+
+        overlay.addSubview(stickerPanel)
 
         NSLayoutConstraint.activate([
             stickerPanel.heightAnchor.constraint(equalToConstant: 100),
-            stickerPanel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            stickerPanel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            stickerPanel.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16)
+            stickerPanel.leadingAnchor.constraint(equalTo: overlay.leadingAnchor, constant: 16),
+            stickerPanel.trailingAnchor.constraint(equalTo: overlay.trailingAnchor, constant: -16),
+            stickerPanel.bottomAnchor.constraint(equalTo: overlay.safeAreaLayoutGuide.bottomAnchor, constant: -16)
         ])
-        
+
         loadStickersFromFirebase()
+    }
+    
+    @objc private func hideStickerPanel() {
+        stickerPanel?.removeFromSuperview()
+        stickerPanel = nil
+
+        dismissOverlay?.removeFromSuperview()
+        dismissOverlay = nil
     }
     
     private func loadStickersFromFirebase() {
@@ -996,7 +1027,6 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
 extension NewScrapbook: UIColorPickerViewControllerDelegate{
     func colorPickerViewControllerDidSelectColor(_ viewController: UIColorPickerViewController){
         setBackgroundColor(color: viewController.selectedColor)
-        viewController.dismiss(animated: true)
     }
 }
 
