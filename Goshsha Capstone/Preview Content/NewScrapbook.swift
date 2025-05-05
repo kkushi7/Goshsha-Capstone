@@ -523,6 +523,36 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
     
     @objc private func applyFrame(_ sender: UIButton) {
         print("Frame button tapped")
+        guard let originalImage = imageView.image else { return }
+
+        let polaroidView = UIView()
+        polaroidView.backgroundColor = .white
+        polaroidView.layer.borderColor = UIColor.black.cgColor
+        polaroidView.layer.borderWidth = 1
+        polaroidView.tag = 1234
+
+        let topPadding: CGFloat = 8
+        let sidePadding: CGFloat = 8
+        let bottomPadding: CGFloat = 24
+
+        let framedImageView = UIImageView(image: originalImage)
+        framedImageView.contentMode = .scaleAspectFit
+
+        polaroidView.addSubview(framedImageView)
+        framedImageView.translatesAutoresizingMaskIntoConstraints = false
+
+        NSLayoutConstraint.activated([
+            framedImageView.topAnchor.constraint(equalTo: polaroidView.topAnchor, constant: topPadding),
+            framedImageView.leadingAnchor.constraint(equalTo: polaroidView.leadingAnchor, constant: sidePadding),
+            framedImageView.trailingAnchor.constraint(equalTo: polaroidView.trailingAnchor, constant: -sidePadding),
+            framedImageView.bottomAnchor.constraint(equalTo: polaroidView.bottomAnchor, constant: -bottomPadding),
+        ])
+
+        let polaroidSize = CGSize(width: imageView.bounds.width + sidePadding * 2, height: imageView.bounds.height + topPadding + bottomPadding)
+        polaroidView.frame = CGRect(origin: imageView.frame.origin, size: polaroidSize)
+
+        //Replace the original imageView with the framed view
+        imageView.superview?.addSubview(polaroidView)
     }
     
     @objc private func showDeleteButton(_ gesture: UILongPressGestureRecognizer) {
