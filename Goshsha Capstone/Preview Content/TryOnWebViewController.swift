@@ -43,9 +43,9 @@ class TryOnWebViewController: UIViewController, WKNavigationDelegate, WKUIDelega
         
         // Add save button
         let saveToScrapbookButton = UIButton(type: .system)
-        saveButton.setTitle("Save to ScrapBook \u{2605}", for: .normal)
-        saveButton.addTarget(self, action: #selector(saveToScrapbookTapped), for: .touchUpInside)
-        saveButton.frame = CGRect(x: 0, y: 0, width: 170, height: 40)
+        saveToScrapbookButton.setTitle("Save to ScrapBook \u{2605}", for: .normal)
+        saveToScrapbookButton.addTarget(self, action: #selector(saveToScrapbookTapped), for: .touchUpInside)
+        saveToScrapbookButton.frame = CGRect(x: 0, y: 0, width: 170, height: 40)
         
         titleView.addSubview(saveToScrapbookButton)
         self.navigationItem.titleView = titleView
@@ -136,21 +136,19 @@ class TryOnWebViewController: UIViewController, WKNavigationDelegate, WKUIDelega
         present(scrapbookEditVC, animated: true, completion: nil)
     }
     
-    @objc func saveButtonTapped() {
-//        print("Saved to scrapbook")
+    @objc func saveToScrapbookTapped() {
         print("URL: \(webView.url?.absoluteString ?? "No URL loaded")")
         guard let screenshot = captureScreenshot() else {
             print("Failed to capture screenshot")
             return
         }
 
-        //upload to storage
         uploadPhoto(image: screenshot) { [weak self] url in
             guard let self = self, let downloadURL = url else { return }
-            
+
             let centerX = screenshot.size.width / 2
             let centerY = screenshot.size.height / 2
-            
+
             let photoData: [String: Any] = [
                 "id": UUID().uuidString,
                 "url": downloadURL.absoluteString,
@@ -160,15 +158,13 @@ class TryOnWebViewController: UIViewController, WKNavigationDelegate, WKUIDelega
                 "scaleY": 1,
                 "rotation": 0
             ]
-            // save to scrapbook
-            saveToScrapbook(photoData: photoData)
+
+            self.saveToScrapbook(photoData: photoData) {
+                self.openScrapbookEditPage()
+            }
         }
     }
-    
-    @objc func saveToScrapbookTapped() {
-        saveButtonTapped()
-        openScrapbookEditPage()
-    }
+
 
     @objc func tryOnButtonTapped() {
         
@@ -254,7 +250,7 @@ class TryOnWebViewController: UIViewController, WKNavigationDelegate, WKUIDelega
     }
     
     // save screenshot to Firebase
-    func saveToScrapbook(photoData: [String: Any]) {
+    func saveToScrapbook(photoData: [String: Any], completion: @escaping () -> Void) {
         guard let uid = Auth.auth().currentUser?.uid else {
             print("User not authenticated")
             return
@@ -262,7 +258,6 @@ class TryOnWebViewController: UIViewController, WKNavigationDelegate, WKUIDelega
 
         let userRef = db.collection("users").document(uid)
 
-        // Append photoData to the "photos" array inside the "scrapbooks" map
         userRef.updateData([
             "scrapbooks.photos": FieldValue.arrayUnion([photoData])
         ]) { error in
@@ -270,6 +265,7 @@ class TryOnWebViewController: UIViewController, WKNavigationDelegate, WKUIDelega
                 print("Error saving photo to scrapbook: \(error.localizedDescription)")
             } else {
                 print("Photo successfully added to scrapbook!")
+                completion()
             }
         }
     }
