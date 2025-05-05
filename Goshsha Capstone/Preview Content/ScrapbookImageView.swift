@@ -9,4 +9,5 @@ import UIKit
 
 class ScrapbookImageView: UIImageView {
     var firebaseURL: String?
+    var hasPolaroidFrame: Bool = false
 }
