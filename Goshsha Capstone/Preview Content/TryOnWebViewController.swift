@@ -39,21 +39,15 @@ class TryOnWebViewController: UIViewController, WKNavigationDelegate, WKUIDelega
             navigationBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.black] // Set the title color
         }
         
-        let titleView = UIView(frame: CGRect(x: 0, y: 0, width: 160, height: 40))
+        let titleView = UIView(frame: CGRect(x: 0, y: 0, width: 170, height: 40))
         
         // Add save button
-        let saveButton = UIButton(type: .system)
-        saveButton.setTitle("Save", for: .normal)
-        saveButton.addTarget(self, action: #selector(saveButtonTapped), for: .touchUpInside)
-        saveButton.frame = CGRect(x: 0, y: 0, width: 60, height: 40)
+        let saveToScrapbookButton = UIButton(type: .system)
+        saveButton.setTitle("Save to ScrapBook \u{2605}", for: .normal)
+        saveButton.addTarget(self, action: #selector(saveToScrapbookTapped), for: .touchUpInside)
+        saveButton.frame = CGRect(x: 0, y: 0, width: 170, height: 40)
         
-        let scrapbookButton = UIButton(type: .system)
-        scrapbookButton.setTitle("ScrapBook \u{2605}", for: .normal)
-        scrapbookButton.addTarget(self, action: #selector(openScrapbookEditPage), for: .touchUpInside)
-        scrapbookButton.frame = CGRect(x: 60, y: 0, width: 110, height: 40)
-        
-        titleView.addSubview(saveButton)
-        titleView.addSubview(scrapbookButton)
+        titleView.addSubview(saveToScrapbookButton)
         self.navigationItem.titleView = titleView
         
         // Add the "Done" button to the navigation bar
@@ -171,6 +165,11 @@ class TryOnWebViewController: UIViewController, WKNavigationDelegate, WKUIDelega
         }
     }
     
+    @objc func saveToScrapbookTapped() {
+        saveButtonTapped()
+        openScrapbookEditPage()
+    }
+
     @objc func tryOnButtonTapped() {
         
         // Load the URL
