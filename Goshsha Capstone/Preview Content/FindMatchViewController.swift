@@ -213,17 +213,17 @@ class FindMatchViewController: UIViewController, UICollectionViewDelegate, UICol
 
         let selectedView = productImages[selectedIndex.item]
 
-        if titleLabel.text == "Select the first image" {
+        if titleLabel.text == "Select the first try-on image" {
             firstSelectedImage = selectedView
             productImages.remove(at: selectedIndex.item)
 
-            titleLabel.text = "Select the second image"
+            titleLabel.text = "Select the second try-on image"
             selectedProductIndex = nil
             doneButton.isEnabled = false
             doneButton.alpha = 0.5
             gridView.reloadData()
             
-        } else if titleLabel.text == "Select the second image" {
+        } else if titleLabel.text == "Select the second try-on image" {
             secondSelectedImage = selectedView
 
             guard let first = firstSelectedImage,

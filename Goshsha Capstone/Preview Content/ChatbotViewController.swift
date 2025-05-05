@@ -89,6 +89,11 @@ class ChatbotViewController: UIViewController, UIImagePickerControllerDelegate, 
     }
     
     private func startImageSelectionFlow() {
+        updateHelpBox(
+            with: "Select try-ons of similar products",
+            fontSize: 18
+        )
+        
         let findMatchVC = FindMatchViewController()
         findMatchVC.modalPresentationStyle = .fullScreen
 
