@@ -236,7 +236,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
             // Process all images and stickers
             for subview in panel.subviews where !(subview is UIButton) {
                 if let container = subview as? UIView,
-                   let imageView = container.subviews.first(where: { $0 is UIImageView }) as? UIImageView {
+                   let imageView = container.subviews.first(where: { $0 is ScrapbookImageView }) as? ScrapbookImageView {
 
                     var itemData: [String: Any] = [
                         "id": UUID().uuidString,
@@ -262,6 +262,8 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
                                 itemData["url"] = url.absoluteString
                                 itemData["x"] = container.center.x
                                 itemData["y"] = container.center.y
+                                itemData["frame"] = imageView.hasPolaroidFrame
+
                                 photos.append(itemData)
                             }
                             dispatchGroup.leave()
@@ -474,7 +476,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         container.addGestureRecognizer(pinchGesture)
         
         let longPress = UILongPressGestureRecognizer(target: self, action: #selector(showDeleteButton(_:)))
-        imageView.addGestureRecognizer(longPress)
+        container.addGestureRecognizer(longPress)
         
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleImageTap(_:)))
         imageView.isUserInteractionEnabled = true
@@ -522,43 +524,70 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
     }
     
     @objc private func applyFrame(_ sender: UIButton) {
-        print("Frame button tapped")
-        guard let originalImage = imageView.image else { return }
+        guard let container = sender.superview,
+              let imageView = container.subviews.first(where: { $0 is ScrapbookImageView }) as? ScrapbookImageView else {
+            return
+        }
+        applyFrame(to: imageView)
+    }
+    
+    func applyFrame(to imageView: ScrapbookImageView) {
+        guard let container = imageView.superview else { return }
 
-        let polaroidView = UIView()
-        polaroidView.backgroundColor = .white
-        polaroidView.layer.borderColor = UIColor.black.cgColor
-        polaroidView.layer.borderWidth = 1
-        polaroidView.tag = 1234
+        if let existingFrame = container.viewWithTag(1234) {
+            existingFrame.removeFromSuperview()
+            imageView.hasPolaroidFrame = false
+            return
+        }
 
-        let topPadding: CGFloat = 8
-        let sidePadding: CGFloat = 8
-        let bottomPadding: CGFloat = 24
+        let polaroidColor = UIColor(red: 251/255.0, green: 239/255.0, blue: 244/255.0, alpha: 1.0)
 
-        let framedImageView = UIImageView(image: originalImage)
-        framedImageView.contentMode = .scaleAspectFit
+        let frameView = UIView()
+        frameView.tag = 1234
+        frameView.backgroundColor = polaroidColor
+        frameView.layer.cornerRadius = 0
+        frameView.layer.shadowColor = UIColor.black.cgColor
+        frameView.layer.shadowOpacity = 0.1
+        frameView.layer.shadowOffset = CGSize(width: 2, height: 2)
+        frameView.layer.shadowRadius = 3
+        frameView.clipsToBounds = true
+        frameView.isUserInteractionEnabled = false
 
-        polaroidView.addSubview(framedImageView)
-        framedImageView.translatesAutoresizingMaskIntoConstraints = false
+        let paddingTop: CGFloat = 20
+        let paddingSides: CGFloat = 15
+        let paddingBottom: CGFloat = 60
 
-        NSLayoutConstraint.activated([
-            framedImageView.topAnchor.constraint(equalTo: polaroidView.topAnchor, constant: topPadding),
-            framedImageView.leadingAnchor.constraint(equalTo: polaroidView.leadingAnchor, constant: sidePadding),
-            framedImageView.trailingAnchor.constraint(equalTo: polaroidView.trailingAnchor, constant: -sidePadding),
-            framedImageView.bottomAnchor.constraint(equalTo: polaroidView.bottomAnchor, constant: -bottomPadding),
+        let frameX = imageView.frame.origin.x - paddingSides
+        let frameY = imageView.frame.origin.y - paddingTop
+        let frameWidth = imageView.frame.width + 2 * paddingSides
+        let frameHeight = imageView.frame.height + paddingTop + paddingBottom
+
+        frameView.frame = CGRect(x: frameX, y: frameY, width: frameWidth, height: frameHeight)
+
+        let captionLabel = UILabel()
+        captionLabel.text = "Fujifilm Instax\nMini Format"
+        captionLabel.numberOfLines = 2
+        captionLabel.font = UIFont.systemFont(ofSize: 14, weight: .semibold)
+        captionLabel.textAlignment = .center
+        captionLabel.textColor = .darkGray
+        captionLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        frameView.addSubview(captionLabel)
+        container.insertSubview(frameView, belowSubview: imageView)
+
+        NSLayoutConstraint.activate([
+            captionLabel.bottomAnchor.constraint(equalTo: frameView.bottomAnchor, constant: -8),
+            captionLabel.centerXAnchor.constraint(equalTo: frameView.centerXAnchor),
+            captionLabel.widthAnchor.constraint(equalTo: frameView.widthAnchor, multiplier: 0.8),
+            captionLabel.heightAnchor.constraint(equalToConstant: 40)
         ])
 
-        let polaroidSize = CGSize(width: imageView.bounds.width + sidePadding * 2, height: imageView.bounds.height + topPadding + bottomPadding)
-        polaroidView.frame = CGRect(origin: imageView.frame.origin, size: polaroidSize)
-
-        //Replace the original imageView with the framed view
-        imageView.superview?.addSubview(polaroidView)
+        imageView.hasPolaroidFrame = true
     }
     
     @objc private func showDeleteButton(_ gesture: UILongPressGestureRecognizer) {
         guard gesture.state == .began,
-              let imageView = gesture.view as? ScrapbookImageView,
-              let container = imageView.superview else { return }
+              let container = gesture.view else { return }
 
         for subview in container.subviews {
             if let button = subview as? UIButton {
@@ -692,6 +721,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         // Hide sticker panel after selection
         stickerPanel.removeFromSuperview()
         stickerPanel = nil
+        hideStickerPanel()
     }
     
     private func loadStickers() {
@@ -757,7 +787,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
 
         let imageView = ScrapbookImageView(image: image)
         imageView.contentMode = .scaleAspectFit
-        imageView.isUserInteractionEnabled = true
+        imageView.isUserInteractionEnabled = false
         imageView.frame = container.bounds
         imageView.layer.cornerRadius = 10
         imageView.clipsToBounds = true
@@ -790,7 +820,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         container.addGestureRecognizer(pinchGesture)
 
         let longPressGesture = UILongPressGestureRecognizer(target: self, action: #selector(showDeleteButton(_:)))
-        imageView.addGestureRecognizer(longPressGesture)
+        container.addGestureRecognizer(longPressGesture)
     }
     
     private func loadPhotos() {
@@ -831,6 +861,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
             print("Invalid photo data")
             return
         }
+        let hasFrame = data["frame"] as? Bool ?? false
         print("Photo x: \(x), y: \(y), scaleX: \(scaleX), scaleY: \(scaleY), rotation: \(rotation)") // Print values
 
         URLSession.shared.dataTask(with: url) { data, _, error in
@@ -845,6 +876,9 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
                 if let lastContainer = self.contentPanel.subviews.last,
                    let loadedImageView = lastContainer.subviews.first as? ScrapbookImageView {
                     loadedImageView.firebaseURL = urlString
+                    if hasFrame {
+                        self.applyFrame(to: loadedImageView)
+                    }
                 }
             }
         }.resume()
