@@ -16,17 +16,14 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
     var isDeleteModeActive = false
     var contentPanel: UIView!
     var stickerPanel: UIScrollView!
-    private var eyedropperTargetImageView: UIImageView?
-    private var colorPreview: UIView!
-    private var colorInfoLabel: UILabel!
+    var chatButton: UIButton!
     private var dismissOverlay: UIView?
     let db = Firestore.firestore();
 
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
-        loadStickers()
-        loadPhotos()
+        loadAllLayersInOrder()
         loadBackground()
     }
 
@@ -60,8 +57,9 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         view.addSubview(contentPanel)
 
         // Chat Button
-        let chatButton = setupButton(imageName: "goshi", action: #selector(chatTapped))
-        contentPanel.addSubview(chatButton)
+        chatButton = setupButton(imageName: "goshi", action: #selector(chatTapped))
+        view.addSubview(chatButton)
+        view.bringSubviewToFront(chatButton)
 
         // Toolbar
         let toolbar = createToolbar()
@@ -232,9 +230,12 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
             var photos: [[String: Any]] = []
             var stickers: [[String: Any]] = []
             let dispatchGroup = DispatchGroup()
+            
+            let layeredSubviews = panel.subviews
+                .filter { !($0 is UIButton) }
 
             // Process all images and stickers
-            for subview in panel.subviews where !(subview is UIButton) {
+            for (index, subview) in layeredSubviews.enumerated() {
                 if let container = subview as? UIView,
                    let imageView = container.subviews.first(where: { $0 is ScrapbookImageView }) as? ScrapbookImageView {
 
@@ -242,7 +243,8 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
                         "id": UUID().uuidString,
                         "scaleX": container.transform.a,
                         "scaleY": container.transform.d,
-                        "rotation": atan2(container.transform.b, container.transform.a)
+                        "rotation": atan2(container.transform.b, container.transform.a),
+                        "zIndex": index
                     ]
 
                     if let imageUrl = imageView.accessibilityIdentifier {
@@ -589,6 +591,10 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         guard gesture.state == .began,
               let container = gesture.view else { return }
 
+        // Bring the container to front
+        contentPanel.bringSubviewToFront(container)
+
+        // Toggle visibility of all buttons inside
         for subview in container.subviews {
             if let button = subview as? UIButton {
                 button.isHidden.toggle()
@@ -724,33 +730,6 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         hideStickerPanel()
     }
     
-    private func loadStickers() {
-        guard let uid = Auth.auth().currentUser?.uid else {
-            print("User not logged in.")
-            return
-        }
-
-        db.collection("users").document(uid).getDocument { (document, error) in
-            if let error = error {
-                print("Error getting document: \(error)")
-                return
-            }
-
-            if let document = document, document.exists {
-                if let scrapbooks = document.data()?["scrapbooks"] as? [String: Any],
-                   let stickersData = scrapbooks["stickers"] as? [[String: Any]] {
-                    for stickerData in stickersData {
-                        self.loadSticker(from: stickerData)
-                    }
-                } else {
-                    print("No stickers data found.")
-                }
-            } else {
-                print("Document does not exist")
-            }
-        }
-    }
-    
     private func loadSticker(from data: [String: Any]) {
         guard let urlString = data["url"] as? String,
               let url = URL(string: urlString),
@@ -787,7 +766,6 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
 
         let imageView = ScrapbookImageView(image: image)
         imageView.contentMode = .scaleAspectFit
-        imageView.isUserInteractionEnabled = false
         imageView.frame = container.bounds
         imageView.layer.cornerRadius = 10
         imageView.clipsToBounds = true
@@ -821,9 +799,18 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
 
         let longPressGesture = UILongPressGestureRecognizer(target: self, action: #selector(showDeleteButton(_:)))
         container.addGestureRecognizer(longPressGesture)
+        
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleStickerTap(_:)))
+        container.addGestureRecognizer(tapGesture)
     }
     
-    private func loadPhotos() {
+    @objc private func handleStickerTap(_ gesture: UITapGestureRecognizer) {
+        if let container = gesture.view {
+            contentPanel.bringSubviewToFront(container)
+        }
+    }
+    
+    private func loadAllLayersInOrder() {
         guard let uid = Auth.auth().currentUser?.uid else {
             print("User not logged in.")
             return
@@ -835,19 +822,113 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
                 return
             }
 
-            if let document = document, document.exists {
-                if let scrapbooks = document.data()?["scrapbooks"] as? [String: Any],
-                   let photosData = scrapbooks["photos"] as? [[String: Any]] {
-                    for photoData in photosData {
-                        self.loadPhoto(from: photoData)
-                    }
-                } else {
-                    print("No photo data found.")
+            guard let document = document, document.exists,
+                  let scrapbooks = document.data()?["scrapbooks"] as? [String: Any] else {
+                print("No scrapbook data found.")
+                return
+            }
+
+            var allItems: [[String: Any]] = []
+
+            if let photosData = scrapbooks["photos"] as? [[String: Any]] {
+                for var photo in photosData {
+                    photo["type"] = "photo"
+                    allItems.append(photo)
                 }
-            } else {
-                print("Document does not exist")
+            }
+
+            if let stickersData = scrapbooks["stickers"] as? [[String: Any]] {
+                for var sticker in stickersData {
+                    sticker["type"] = "sticker"
+                    allItems.append(sticker)
+                }
+            }
+
+            // Prepare to load all images
+            let sortedItems = allItems.sorted {
+                ($0["zIndex"] as? Int ?? 0) < ($1["zIndex"] as? Int ?? 0)
+            }
+
+            let dispatchGroup = DispatchGroup()
+            var loadedViews: [(Int, UIView)] = []
+
+            for item in sortedItems {
+                guard let type = item["type"] as? String,
+                      let urlString = item["url"] as? String,
+                      let url = URL(string: urlString),
+                      let zIndex = item["zIndex"] as? Int else {
+                    continue
+                }
+
+                dispatchGroup.enter()
+                URLSession.shared.dataTask(with: url) { data, _, error in
+                    defer { dispatchGroup.leave() }
+                    guard let data = data, let image = UIImage(data: data), error == nil else {
+                        print("Failed to load image at \(urlString)")
+                        return
+                    }
+
+                    DispatchQueue.main.async {
+                        var view: UIView?
+                        if type == "photo" {
+                            view = self.createLoadedPhotoView(from: item, with: image, urlString: urlString)
+                        } else {
+                            view = self.createLoadedStickerView(from: item, with: image, urlString: urlString)
+                        }
+
+                        if let view = view {
+                            loadedViews.append((zIndex, view))
+                        }
+                    }
+                }.resume()
+            }
+
+            dispatchGroup.notify(queue: .main) {
+                // Add views in sorted order
+                let sortedViews = loadedViews.sorted { $0.0 < $1.0 }
+                for (_, view) in sortedViews {
+                    self.contentPanel.addSubview(view)
+                }
             }
         }
+    }
+    
+    private func createLoadedPhotoView(from data: [String: Any], with image: UIImage, urlString: String) -> UIView {
+        guard let x = data["x"] as? CGFloat,
+              let y = data["y"] as? CGFloat,
+              let scaleX = data["scaleX"] as? CGFloat,
+              let scaleY = data["scaleY"] as? CGFloat,
+              let rotation = data["rotation"] as? CGFloat else {
+            return UIView()
+        }
+
+        let hasFrame = data["frame"] as? Bool ?? false
+        self.addImageToContentPanel(image: image, x: x, y: y, scaleX: scaleX, scaleY: scaleY, rotation: rotation)
+
+        if let lastContainer = self.contentPanel.subviews.last,
+           let loadedImageView = lastContainer.subviews.first as? ScrapbookImageView {
+            loadedImageView.firebaseURL = urlString
+            if hasFrame {
+                self.applyFrame(to: loadedImageView)
+            }
+            return lastContainer
+        }
+
+        return UIView()
+    }
+
+    private func createLoadedStickerView(from data: [String: Any], with image: UIImage, urlString: String) -> UIView {
+        guard let x = data["x"] as? CGFloat,
+              let y = data["y"] as? CGFloat,
+              let scaleX = data["scaleX"] as? CGFloat,
+              let scaleY = data["scaleY"] as? CGFloat,
+              let rotation = data["rotation"] as? CGFloat else {
+            return UIView()
+        }
+
+        self.addStickerToContentPanel(image: image, url: urlString, x: x, y: y, scaleX: scaleX, scaleY: scaleY, rotation: rotation)
+
+        return self.contentPanel.subviews.last ?? UIView()
     }
     
     private func loadPhoto(from data: [String: Any]) {
@@ -940,14 +1021,29 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         guard let imageView = gesture.view as? UIImageView else { return }
         imageView.transform = imageView.transform.scaledBy(x: gesture.scale, y: gesture.scale)
         gesture.scale = 1.0
+        contentPanel.bringSubviewToFront(imageView)
     }
     
     @objc private func handleImageTap(_ sender: UITapGestureRecognizer) {
-        if let imageView = sender.view as? ScrapbookImageView,
-           let urlString = imageView.firebaseURL {
-            print("Tapped image URL: \(urlString)")
-        } else {
+        guard let imageView = sender.view as? ScrapbookImageView,
+              let container = imageView.superview else {
             print("Tapped image has no stored URL.")
+            return
+        }
+
+        // Bring the tapped container to the front
+        contentPanel.bringSubviewToFront(container)
+
+        UIView.animate(withDuration: 0.15, animations: {
+            container.transform = container.transform.scaledBy(x: 1.05, y: 1.05)
+        }) { _ in
+            UIView.animate(withDuration: 0.1) {
+                container.transform = .identity
+            }
+        }
+
+        if let urlString = imageView.firebaseURL {
+            print("Tapped image URL: \(urlString)")
         }
     }
 
@@ -1056,6 +1152,9 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         
         movingView.center = newCenter
         gesture.setTranslation(.zero, in: panel)
+        
+        // Bring the container to front
+        panel.bringSubviewToFront(movingView)
     }
 
     // MARK: - Button Actions
