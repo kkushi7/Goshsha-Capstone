@@ -88,6 +88,10 @@ class ChatbotViewController: UIViewController, UIImagePickerControllerDelegate, 
         present(vc, animated: true)
     }
     
+    func restartCameraFlow() {
+        self.presentCameraForBaseTone()
+    }
+    
     private func startImageSelectionFlow() {
         updateHelpBox(
             with: "Select try-ons of similar products",
