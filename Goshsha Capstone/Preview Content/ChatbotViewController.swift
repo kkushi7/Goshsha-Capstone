@@ -94,21 +94,23 @@ class ChatbotViewController: UIViewController, UIImagePickerControllerDelegate, 
             fontSize: 18
         )
         
-        let findMatchVC = FindMatchViewController()
-        findMatchVC.modalPresentationStyle = .fullScreen
+        // Delay to allow text update to render
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+            let findMatchVC = FindMatchViewController()
+            findMatchVC.modalPresentationStyle = .fullScreen
 
-        findMatchVC.onMatchAnalysisComplete = { hex1, hex2, view1, view2 in
-            self.shadeAnalyzeBot(hex1: hex1, hex2: hex2, view1: view1, view2: view2)
+            findMatchVC.onMatchAnalysisComplete = { hex1, hex2, view1, view2 in
+                self.shadeAnalyzeBot(hex1: hex1, hex2: hex2, view1: view1, view2: view2)
+            }
+
+            self.present(findMatchVC, animated: true)
         }
-
-        self.present(findMatchVC, animated: true)
     }
 
     @objc private func dismissChatbot() {
         if !findMatch {
             dismiss(animated: true)
         } else if !buyProduct {
-            presentFindMatch()
             buyProduct = true
         } else {
             updateHelpBox(
@@ -133,6 +135,11 @@ class ChatbotViewController: UIViewController, UIImagePickerControllerDelegate, 
     @objc private func findMatchTapped() {
         updateHelpBox(with: "Shore-ly! I can do that for you", fontSize: 30)
         findMatch = true
+        
+        // auto move on after 1.5s
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            self.presentCameraForBaseTone()
+        }
     }
 
     @objc private func buyProductTapped() {
@@ -235,9 +242,14 @@ class ChatbotViewController: UIViewController, UIImagePickerControllerDelegate, 
         let better = diff1 < diff2 ? "first" : "second"
         updateHelpBox(with: "Between these two, I think the \(better) one is your tidal match!", fontSize: 26)
     }
+    
+    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+        picker.dismiss(animated: true) {
+            self.presentingViewController?.dismiss(animated: true)
+        }
+    }
 
     private func presentFindMatch() {
-        presentCameraForBaseTone()
         let findMatchVC = FindMatchViewController()
         findMatchVC.modalPresentationStyle = .fullScreen
 

@@ -15,6 +15,7 @@ class FindMatchViewController: UIViewController, UICollectionViewDelegate, UICol
     private var titleLabel: UILabel! // Title label
     private var gridView: UICollectionView! // Collection view for the grid of images
     private var doneButton: UIButton!
+    private var cancelButton: UIButton!
     private var firstSelectedImage: ScrapbookImageView?
     private var secondSelectedImage: ScrapbookImageView?
     private var firstHex: String?
@@ -34,7 +35,7 @@ class FindMatchViewController: UIViewController, UICollectionViewDelegate, UICol
         
         // Title Label
         titleLabel = UILabel()
-        titleLabel.text = "Select the first image"
+        titleLabel.text = "Select the first try-on image"
         titleLabel.font = UIFont.systemFont(ofSize: 24, weight: .bold)
         titleLabel.textAlignment = .center
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -89,14 +90,6 @@ class FindMatchViewController: UIViewController, UICollectionViewDelegate, UICol
         doneButton.isEnabled = false
         doneButton.alpha = 0.5
         view.addSubview(doneButton)
-        
-        // Constraints for the Done button
-        NSLayoutConstraint.activate([
-            doneButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
-            doneButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            doneButton.heightAnchor.constraint(equalToConstant: 50),
-            doneButton.widthAnchor.constraint(equalToConstant: 300)
-        ])
 
         //cancel button
         cancelButton = UIButton(type: .system)
@@ -108,15 +101,24 @@ class FindMatchViewController: UIViewController, UICollectionViewDelegate, UICol
         cancelButton.translatesAutoresizingMaskIntoConstraints = false
         cancelButton.addTarget(self, action: #selector(cancelButtonTapped), for: .touchUpInside)
         cancelButton.titleLabel?.font = UIFont.systemFont(ofSize: 24, weight: .bold)
-        cancelButton.isEnabled = false
-        cancelButton.alpha = 0.5
+        cancelButton.alpha = 1.0
         view.addSubview(cancelButton)
 
+        // Create a horizontal stack view
+        let buttonStack = UIStackView(arrangedSubviews: [cancelButton, doneButton])
+        buttonStack.axis = .horizontal
+        buttonStack.alignment = .fill
+        buttonStack.distribution = .fillEqually
+        buttonStack.spacing = 16
+        buttonStack.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(buttonStack)
+
+        // Constraints for the stack view
         NSLayoutConstraint.activate([
-            cancelButton.topAnchor.constraint(equalTo: doneButton.bottomAnchor, constant: 12),
-            cancelButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            cancelButton.heightAnchor.constraint(equalToConstant: 50),
-            cancelButton.widthAnchor.constraint(equalToConstant: 300)
+            buttonStack.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
+            buttonStack.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            buttonStack.heightAnchor.constraint(equalToConstant: 50),
+            buttonStack.widthAnchor.constraint(equalToConstant: 320)
         ])
     }
     
@@ -242,6 +244,7 @@ class FindMatchViewController: UIViewController, UICollectionViewDelegate, UICol
             selectedProductIndex = nil
             doneButton.isEnabled = false
             doneButton.alpha = 0.5
+            cancelButton.setTitle("Back", for: .normal)
             gridView.reloadData()
             
         } else if titleLabel.text == "Select the second try-on image" {
@@ -255,7 +258,22 @@ class FindMatchViewController: UIViewController, UICollectionViewDelegate, UICol
     }
 
     //Cancel button action
-    @objc private func cancelButtonTapped(){
-        dismiss(animated: true, completion: nil)
+    @objc private func cancelButtonTapped() {
+        if titleLabel.text == "Select the first try-on image" {
+            // back to Scrapbook
+            presentingViewController?.presentingViewController?.dismiss(animated: true)
+        } else if titleLabel.text == "Select the second try-on image" {
+            // back to Step 1
+            if let first = firstSelectedImage {
+                productImages.insert(first, at: 0)
+            }
+            firstSelectedImage = nil
+            secondSelectedImage = nil
+            titleLabel.text = "Select the first try-on image"
+            selectedProductIndex = nil
+            doneButton.isEnabled = false
+            doneButton.alpha = 0.5
+            gridView.reloadData()
+        }
     }
 }
