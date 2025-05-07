@@ -104,21 +104,16 @@ class FindMatchViewController: UIViewController, UICollectionViewDelegate, UICol
         cancelButton.alpha = 1.0
         view.addSubview(cancelButton)
 
-        // Create a horizontal stack view
-        let buttonStack = UIStackView(arrangedSubviews: [cancelButton, doneButton])
-        buttonStack.axis = .horizontal
-        buttonStack.alignment = .fill
-        buttonStack.distribution = .fillEqually
-        buttonStack.spacing = 16
-        buttonStack.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(buttonStack)
-
-        // Constraints for the stack view
         NSLayoutConstraint.activate([
-            buttonStack.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
-            buttonStack.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            buttonStack.heightAnchor.constraint(equalToConstant: 50),
-            buttonStack.widthAnchor.constraint(equalToConstant: 320)
+            doneButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -80),
+            doneButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            doneButton.heightAnchor.constraint(equalToConstant: 50),
+            doneButton.widthAnchor.constraint(equalToConstant: 300),
+
+            cancelButton.topAnchor.constraint(equalTo: doneButton.bottomAnchor, constant: 12),
+            cancelButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            cancelButton.heightAnchor.constraint(equalToConstant: 50),
+            cancelButton.widthAnchor.constraint(equalToConstant: 300)
         ])
     }
     
@@ -260,8 +255,14 @@ class FindMatchViewController: UIViewController, UICollectionViewDelegate, UICol
     //Cancel button action
     @objc private func cancelButtonTapped() {
         if titleLabel.text == "Select the first try-on image" {
-            // back to Scrapbook
-            presentingViewController?.presentingViewController?.dismiss(animated: true)
+            // back to Camera
+            if let chatbotVC = presentingViewController as? ChatbotViewController {
+                self.dismiss(animated: true) {
+                    chatbotVC.restartCameraFlow()
+                }
+            } else {
+                self.dismiss(animated: true) // fallback just in case
+            }
         } else if titleLabel.text == "Select the second try-on image" {
             // back to Step 1
             if let first = firstSelectedImage {
@@ -273,6 +274,7 @@ class FindMatchViewController: UIViewController, UICollectionViewDelegate, UICol
             selectedProductIndex = nil
             doneButton.isEnabled = false
             doneButton.alpha = 0.5
+            cancelButton.setTitle("Cancel", for: .normal)
             gridView.reloadData()
         }
     }
