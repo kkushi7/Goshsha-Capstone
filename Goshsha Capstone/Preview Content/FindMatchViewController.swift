@@ -97,6 +97,27 @@ class FindMatchViewController: UIViewController, UICollectionViewDelegate, UICol
             doneButton.heightAnchor.constraint(equalToConstant: 50),
             doneButton.widthAnchor.constraint(equalToConstant: 300)
         ])
+
+        //cancel button
+        cancelButton = UIButton(type: .system)
+        cancelButton.backgroundColor = UIColor(white: 0.9, alpha: 1)
+        cancelButton.setTitle("Cancel", for: .normal)
+        cancelButton.setTitleColor(.black, for: .normal)
+        cancelButton.layer.cornerRadius = 10
+        cancelButton.layer.masksToBounds = true
+        cancelButton.translatesAutoresizingMaskIntoConstraints = false
+        cancelButton.addTarget(self, action: #selector(cancelButtonTapped), for: .touchUpInside)
+        cancelButton.titleLabel?.font = UIFont.systemFont(ofSize: 24, weight: .bold)
+        cancelButton.isEnabled = false
+        cancelButton.alpha = 0.5
+        view.addSubview(cancelButton)
+
+        NSLayoutConstraint.activate([
+            cancelButton.topAnchor.constraint(equalTo: doneButton.bottomAnchor, constant: 12),
+            cancelButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            cancelButton.heightAnchor.constraint(equalToConstant: 50),
+            cancelButton.widthAnchor.constraint(equalToConstant: 300)
+        ])
     }
     
     private func startColorSelectionFlow(image1: UIImage, image2: UIImage) {
@@ -231,5 +252,10 @@ class FindMatchViewController: UIViewController, UICollectionViewDelegate, UICol
 
             startColorSelectionFlow(image1: first.image!, image2: second.image!)
         }
+    }
+
+    //Cancel button action
+    @objc private func cancelButtonTapped(){
+        dismiss(animated: true, completion: nil)
     }
 }
