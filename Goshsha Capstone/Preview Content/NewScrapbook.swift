@@ -467,27 +467,8 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         imageView.layer.cornerRadius = 20
         imageView.clipsToBounds = true
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-        addedItems.append(container)
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-<<<<<<< HEAD
-        actionStack.append(.add(view: imageView))
-=======
-        addedItems.append(container)
->>>>>>> 4573a62fafd3a39378e924329d43560ac73f1b0c
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
+        actionStack.append(.add(view: container))
+
 
         // Scale down imageView to 50% of panel size
         let scaleFactor = min((panel.bounds.width * 0.5) / imageView.bounds.width,
