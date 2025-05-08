@@ -18,27 +18,8 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
     var stickerPanel: UIScrollView!
     var chatButton: UIButton!
     private var dismissOverlay: UIView?
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-    private var addedItems: [UIView] = []
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-<<<<<<< HEAD
     priavte var actionStack: [EditorAction] = []
-=======
-    private var addedItems: [UIView] = []
->>>>>>> 4573a62fafd3a39378e924329d43560ac73f1b0c
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
+
     let db = Firestore.firestore();
 
     enum EditorAction {
