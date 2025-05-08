@@ -18,8 +18,22 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
     var stickerPanel: UIScrollView!
     var chatButton: UIButton!
     private var dismissOverlay: UIView?
+<<<<<<< Updated upstream
     private var addedItems: [UIView] = []
+=======
+<<<<<<< HEAD
+    priavte var actionStack: [EditorAction] = []
+=======
+    private var addedItems: [UIView] = []
+>>>>>>> 4573a62fafd3a39378e924329d43560ac73f1b0c
+>>>>>>> Stashed changes
     let db = Firestore.firestore();
+
+    enum EditorAction {
+        case add(view: UIView)
+        case move(view: UIView, from: CGPoint, to: CGPoint)
+        case delete(view: UIView)
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -460,7 +474,15 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         imageView.layer.cornerRadius = 20
         imageView.clipsToBounds = true
 
+<<<<<<< Updated upstream
         addedItems.append(container)
+=======
+<<<<<<< HEAD
+        actionStack.append(.add(view: imageView))
+=======
+        addedItems.append(container)
+>>>>>>> 4573a62fafd3a39378e924329d43560ac73f1b0c
+>>>>>>> Stashed changes
 
         // Scale down imageView to 50% of panel size
         let scaleFactor = min((panel.bounds.width * 0.5) / imageView.bounds.width,
@@ -777,7 +799,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         imageView.clipsToBounds = true
         imageView.accessibilityIdentifier = url
 
-        addedItems.append(imageView)
+        actionStack.append(.add(view: imageView))
 
         // Delete button
         let deleteButton = UIButton(type: .custom)
@@ -1130,6 +1152,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
     }
 
     @objc private func deleteItem(_ sender: UIButton) {
+        actionStack.append(.delete(view: imageView))
         sender.superview?.removeFromSuperview()
         print("Deleted")
     }
@@ -1163,6 +1186,8 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         
         // Bring the container to front
         panel.bringSubviewToFront(movingView)
+
+        actionStack.append(.move(view: movingView, from: translation, to: newCenter))
     }
 
     // MARK: - Button Actions
@@ -1195,8 +1220,17 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
     }
 
     @objc private func undoButtonTapped(){
-        guard let lastItem = addedItems.popLast() else { return }
-        lastItem.removeFromSuperview()
+        guard let lastAction = actionStack.popLast() else { return }
+        
+        switch lastAction {
+        case .add(let view):
+            view.removeFromSuperview()
+        case .move(let view, let from, _):
+            view.center = from
+        case .delete(let view):
+            view.isHidden = false
+            view.superview?.addSubview(view)
+        }
     }
 }
 
