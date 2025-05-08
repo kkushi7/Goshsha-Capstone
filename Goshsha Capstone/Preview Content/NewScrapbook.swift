@@ -18,6 +18,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
     var stickerPanel: UIScrollView!
     var chatButton: UIButton!
     private var dismissOverlay: UIView?
+    priavte var addedItems: [UIView] = []
     let db = Firestore.firestore();
 
     override func viewDidLoad() {
@@ -117,6 +118,8 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
             createLabeledToolbarItem(imageName: "bg", title: "BACKGROUND", action: #selector(openColorPicker)),
             .flexibleSpace(),
             createLabeledToolbarItem(imageName: "image", title: "IMAGES", action: #selector(cameraTapped)),
+            .flexibleSpace(),
+            createLabeledToolbarItem(imageName: "undo", title: "UNDO", action: #selector(undoButtonTapped)),
             .flexibleSpace()
         ]
         
@@ -210,6 +213,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
             chatButton.bottomAnchor.constraint(equalTo: contentPanel.bottomAnchor, constant: -10),
             chatButton.widthAnchor.constraint(equalToConstant: 150),
             chatButton.heightAnchor.constraint(equalToConstant: 150)
+
         ])
     }
 
@@ -455,6 +459,8 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         imageView.sizeToFit()
         imageView.layer.cornerRadius = 20
         imageView.clipsToBounds = true
+
+        addedItems.append(imageView)
 
         // Scale down imageView to 50% of panel size
         let scaleFactor = min((panel.bounds.width * 0.5) / imageView.bounds.width,
@@ -770,6 +776,8 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         imageView.layer.cornerRadius = 10
         imageView.clipsToBounds = true
         imageView.accessibilityIdentifier = url
+
+        addedItems.append(imageView)
 
         // Delete button
         let deleteButton = UIButton(type: .custom)
@@ -1184,6 +1192,19 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
                 }
             }
         }
+    }
+
+    private func undoButton(){
+        let undoButton = UIButton(type: .system)
+        undoButton.setImage(UIImage(named: "undo-button"), for: .normal)
+        undoButton.translatesAutoresizingMaskIntoConstraints = false
+        undoButton.addTarget(self, action: #selector(undoButtonTapped), for: .touchUPInside)
+        view.addSubview(undoButton)
+    }
+
+    @objc private func undoButtonTapped(){
+        guard let lastItem = addedItems.popLast() else { return }
+        lastItem.removeFromSuperview()
     }
 }
 
