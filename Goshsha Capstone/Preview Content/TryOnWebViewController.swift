@@ -136,6 +136,30 @@ class TryOnWebViewController: UIViewController, WKNavigationDelegate, WKUIDelega
         present(scrapbookEditVC, animated: true, completion: nil)
     }
     
+    private func fetchScrapbookCounts(completion: @escaping (Int, Int) -> Void) {
+        guard let uid = Auth.auth().currentUser?.uid else {
+            completion(0, 0)
+            return
+        }
+
+        db.collection("users").document(uid).getDocument { snapshot, error in
+            if let error = error {
+                print("Error fetching scrapbook counts: \(error.localizedDescription)")
+                completion(0, 0)
+                return
+            }
+
+            guard let data = snapshot?.data()?["scrapbooks"] as? [String: Any] else {
+                completion(0, 0)
+                return
+            }
+
+            let photos = data["photos"] as? [[String: Any]] ?? []
+            let stickers = data["stickers"] as? [[String: Any]] ?? []
+            completion(photos.count, stickers.count)
+        }
+    }
+    
     @objc func saveToScrapbookTapped() {
         print("URL: \(webView.url?.absoluteString ?? "No URL loaded")")
         guard let screenshot = captureScreenshot() else {
@@ -146,25 +170,30 @@ class TryOnWebViewController: UIViewController, WKNavigationDelegate, WKUIDelega
         uploadPhoto(image: screenshot) { [weak self] url in
             guard let self = self, let downloadURL = url else { return }
 
-            let centerX = screenshot.size.width / 2
-            let centerY = screenshot.size.height / 2
+            self.fetchScrapbookCounts { photoCount, stickerCount in
+                let zIndex = photoCount + stickerCount
 
-            let photoData: [String: Any] = [
-                "id": UUID().uuidString,
-                "url": downloadURL.absoluteString,
-                "x": centerX,
-                "y": centerY,
-                "scaleX": 1,
-                "scaleY": 1,
-                "rotation": 0
-            ]
+                let centerX = screenshot.size.width / 2
+                let centerY = screenshot.size.height / 2
 
-            self.saveToScrapbook(photoData: photoData) {
-                self.openScrapbookEditPage()
+                let photoData: [String: Any] = [
+                    "id": UUID().uuidString,
+                    "url": downloadURL.absoluteString,
+                    "x": centerX,
+                    "y": centerY,
+                    "scaleX": 1,
+                    "scaleY": 1,
+                    "rotation": 0,
+                    "zIndex": zIndex,
+                    "frame": false
+                ]
+
+                self.saveToScrapbook(photoData: photoData) {
+                    self.openScrapbookEditPage()
+                }
             }
         }
     }
-
 
     @objc func tryOnButtonTapped() {
         
