@@ -21,6 +21,7 @@ class ColorSelectionViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .black
+        image = image.normalized()
         setupImageView()
         setupEyedropper()
     }
@@ -34,7 +35,7 @@ class ColorSelectionViewController: UIViewController {
     }
 
     private func setupEyedropper() {
-        // Create the bubble
+        // Bubble
         colorPreview = UIView(frame: CGRect(x: view.center.x, y: view.center.y, width: 40, height: 40))
         colorPreview.layer.cornerRadius = 20
         colorPreview.layer.borderColor = UIColor.white.cgColor
@@ -46,11 +47,11 @@ class ColorSelectionViewController: UIViewController {
         colorPreview.isUserInteractionEnabled = true
         view.addSubview(colorPreview)
 
-        // Drag gesture
+        // Pan gesture
         let pan = UIPanGestureRecognizer(target: self, action: #selector(dragBubble(_:)))
         colorPreview.addGestureRecognizer(pan)
 
-        // Color label
+        // Label
         colorInfoLabel = UILabel()
         colorInfoLabel.font = UIFont.systemFont(ofSize: 12, weight: .bold)
         colorInfoLabel.textColor = .white
@@ -62,7 +63,7 @@ class ColorSelectionViewController: UIViewController {
         colorInfoLabel.frame = CGRect(x: colorPreview.frame.origin.x - 40, y: colorPreview.frame.maxY + 5, width: 80, height: 40)
         view.addSubview(colorInfoLabel)
 
-        // Save button attached to the bubble
+        // Save button
         saveButton = UIButton(type: .system)
         saveButton.setTitle("Save", for: .normal)
         saveButton.setTitleColor(.white, for: .normal)
@@ -73,34 +74,33 @@ class ColorSelectionViewController: UIViewController {
         saveButton.addTarget(self, action: #selector(saveColorTapped), for: .touchUpInside)
         view.addSubview(saveButton)
 
-        // Start with initial color
+        // Initial color
         updateBubbleColor(at: colorPreview.center)
     }
 
     @objc private func dragBubble(_ gesture: UIPanGestureRecognizer) {
         let translation = gesture.translation(in: view)
 
-        // Move the bubble
         colorPreview.center.x += translation.x
         colorPreview.center.y += translation.y
         gesture.setTranslation(.zero, in: view)
 
-        // Move label and button with it
         colorInfoLabel.center = CGPoint(x: colorPreview.center.x, y: colorPreview.center.y + 40)
         saveButton.frame.origin = CGPoint(x: colorPreview.frame.maxX + 5, y: colorPreview.frame.minY)
 
-        // Update color
-        let pointInImage = view.convert(colorPreview.center, to: imageView)
-        updateBubbleColor(at: pointInImage)
+        let pointInView = colorPreview.center
+        updateBubbleColor(at: pointInView)
     }
 
     private func updateBubbleColor(at point: CGPoint) {
-        guard let image = imageView.image else { return }
-        if let color = getPixelColor(from: image, at: point, in: imageView) {
+        if let color = image.color(at: point, in: imageView) {
             colorPreview.backgroundColor = color
             let hex = colorToHex(color)
             selectedHex = hex
-            colorInfoLabel.text = "\(hex)\n\(colorToRGBString(color))"
+            colorInfoLabel.text = "\(hex)"
+        } else {
+            colorPreview.backgroundColor = .clear
+            colorInfoLabel.text = "Out of bounds"
         }
     }
 
@@ -118,43 +118,87 @@ class ColorSelectionViewController: UIViewController {
         }
     }
 
-    private func getPixelColor(from image: UIImage, at point: CGPoint, in imageView: UIImageView) -> UIColor? {
-        guard let cgImage = image.cgImage else { return nil }
-
-        let imageSize = image.size
-        let imageViewSize = imageView.bounds.size
-
-        let scaleX = imageSize.width / imageViewSize.width
-        let scaleY = imageSize.height / imageViewSize.height
-
-        let x = Int(point.x * scaleX)
-        let y = Int(point.y * scaleY)
-
-        guard x >= 0, y >= 0, x < cgImage.width, y < cgImage.height else { return nil }
-
-        let pixelData = cgImage.dataProvider?.data
-        guard let data = CFDataGetBytePtr(pixelData) else { return nil }
-
-        let bytesPerPixel = 4
-        let pixelIndex = ((cgImage.width * y) + x) * bytesPerPixel
-
-        let r = CGFloat(data[pixelIndex]) / 255.0
-        let g = CGFloat(data[pixelIndex + 1]) / 255.0
-        let b = CGFloat(data[pixelIndex + 2]) / 255.0
-        let a = CGFloat(data[pixelIndex + 3]) / 255.0
-
-        return UIColor(red: r, green: g, blue: b, alpha: a)
-    }
-
     private func colorToHex(_ color: UIColor) -> String {
-        var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
-        color.getRed(&red, green: &green, blue: &blue, alpha: &alpha)
-        return String(format: "#%02X%02X%02X", Int(red * 255), Int(green * 255), Int(blue * 255))
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        color.getRed(&r, green: &g, blue: &b, alpha: &a)
+        return String(format: "#%02X%02X%02X", Int(r * 255), Int(g * 255), Int(b * 255))
     }
 
     private func colorToRGBString(_ color: UIColor) -> String {
-        var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
-        color.getRed(&red, green: &green, blue: &blue, alpha: &alpha)
-        return String(format: "RGB(%d, %d, %d)", Int(red * 255), Int(green * 255), Int(blue * 255))
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        color.getRed(&r, green: &g, blue: &b, alpha: &a)
+        return String(format: "RGB(%d, %d, %d)", Int(r * 255), Int(g * 255), Int(b * 255))
+    }
+}
+
+extension UIImage {
+    func color(at viewPoint: CGPoint, in imageView: UIImageView) -> UIColor? {
+        guard let cgImage = self.cgImage else { return nil }
+        let displayedFrame = UIImage.displayedImageFrame(for: self, in: imageView)
+
+        guard displayedFrame.contains(viewPoint) else { return nil }
+
+        let normalizedX = (viewPoint.x - displayedFrame.origin.x) / displayedFrame.size.width
+        let normalizedY = (viewPoint.y - displayedFrame.origin.y) / displayedFrame.size.height
+
+        let pixelX = Int(normalizedX * CGFloat(cgImage.width))
+        let pixelY = Int((1 - normalizedY) * CGFloat(cgImage.height))
+
+        guard pixelX >= 0, pixelY >= 0,
+              pixelX < cgImage.width, pixelY < cgImage.height else { return nil }
+
+        let colorSpace = CGColorSpaceCreateDeviceRGB()
+        var pixelData = [UInt8](repeating: 0, count: 4)
+
+        guard let context = CGContext(
+            data: &pixelData,
+            width: 1,
+            height: 1,
+            bitsPerComponent: 8,
+            bytesPerRow: 4,
+            space: colorSpace,
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ) else { return nil }
+
+        context.translateBy(x: -CGFloat(pixelX), y: -CGFloat(pixelY))
+        context.draw(cgImage, in: CGRect(origin: .zero, size: CGSize(width: cgImage.width, height: cgImage.height)))
+
+        return UIColor(
+            red: CGFloat(pixelData[0]) / 255.0,
+            green: CGFloat(pixelData[1]) / 255.0,
+            blue: CGFloat(pixelData[2]) / 255.0,
+            alpha: CGFloat(pixelData[3]) / 255.0
+        )
+    }
+
+    static func displayedImageFrame(for image: UIImage, in imageView: UIImageView) -> CGRect {
+        let viewSize = imageView.bounds.size
+        let imageSize = image.size
+
+        let imageRatio = imageSize.width / imageSize.height
+        let viewRatio = viewSize.width / viewSize.height
+
+        if imageRatio > viewRatio {
+            let scale = viewSize.width / imageSize.width
+            let height = imageSize.height * scale
+            let y = (viewSize.height - height) / 2
+            return CGRect(x: 0, y: y, width: viewSize.width, height: height)
+        } else {
+            let scale = viewSize.height / imageSize.height
+            let width = imageSize.width * scale
+            let x = (viewSize.width - width) / 2
+            return CGRect(x: x, y: 0, width: width, height: viewSize.height)
+        }
+    }
+
+    func normalized() -> UIImage {
+        if self.imageOrientation == .up {
+            return self
+        }
+        UIGraphicsBeginImageContextWithOptions(self.size, false, self.scale)
+        self.draw(in: CGRect(origin: .zero, size: self.size))
+        let normalizedImage = UIGraphicsGetImageFromCurrentImageContext()!
+        UIGraphicsEndImageContext()
+        return normalizedImage
     }
 }

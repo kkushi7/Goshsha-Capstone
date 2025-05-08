@@ -18,7 +18,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
     var stickerPanel: UIScrollView!
     var chatButton: UIButton!
     private var dismissOverlay: UIView?
-    priavte var addedItems: [UIView] = []
+    private var addedItems: [UIView] = []
     let db = Firestore.firestore();
 
     override func viewDidLoad() {
@@ -460,7 +460,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         imageView.layer.cornerRadius = 20
         imageView.clipsToBounds = true
 
-        addedItems.append(imageView)
+        addedItems.append(container)
 
         // Scale down imageView to 50% of panel size
         let scaleFactor = min((panel.bounds.width * 0.5) / imageView.bounds.width,
@@ -1192,14 +1192,6 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
                 }
             }
         }
-    }
-
-    private func undoButton(){
-        let undoButton = UIButton(type: .system)
-        undoButton.setImage(UIImage(named: "undo-button"), for: .normal)
-        undoButton.translatesAutoresizingMaskIntoConstraints = false
-        undoButton.addTarget(self, action: #selector(undoButtonTapped), for: .touchUPInside)
-        view.addSubview(undoButton)
     }
 
     @objc private func undoButtonTapped(){
