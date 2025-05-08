@@ -785,7 +785,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         imageView.clipsToBounds = true
         imageView.accessibilityIdentifier = url
 
-        actionStack.append(.add(view: imageView))
+        actionStack.append(.add(view: container))
 
         // Delete button
         let deleteButton = UIButton(type: .custom)
@@ -1138,7 +1138,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
     }
 
     @objc private func deleteItem(_ sender: UIButton) {
-        actionStack.append(.delete(view: imageView))
+        actionStack.append(.delete(view: container))
         sender.superview?.removeFromSuperview()
         print("Deleted")
     }
