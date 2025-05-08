@@ -18,14 +18,16 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
     var stickerPanel: UIScrollView!
     var chatButton: UIButton!
     private var dismissOverlay: UIView?
-    priavte var actionStack: [EditorAction] = []
+    private var actionStack: [EditorAction] = []
 
     let db = Firestore.firestore();
 
     enum EditorAction {
         case add(view: UIView)
         case move(view: UIView, from: CGPoint, to: CGPoint)
-        case delete(view: UIView)
+        case delete(view: UIView, fromSuperview: UIView)
+        case resize(view: UIView, from: CGAffineTransform, to: CGAffineTransform)
+        case backgroundChange(from: UIColor?, to: UIColor?)
     }
 
     override func viewDidLoad() {
@@ -1033,11 +1035,45 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         }
     }
 
-    @objc private func handleImagePinch(_ gesture: UIPinchGestureRecognizer){
-        guard let imageView = gesture.view as? UIImageView else { return }
-        imageView.transform = imageView.transform.scaledBy(x: gesture.scale, y: gesture.scale)
+    @objc private func handleImagePinch(_ gesture: UIPinchGestureRecognizer) {
+        guard let container = gesture.view,
+              let panel = contentPanel else { return }
+
+        guard let imageView = container.subviews.first(where: { $0 is UIImageView }) else { return }
+
+        struct PinchState {
+            static var initialTransform: CGAffineTransform = .identity
+        }
+
+        if gesture.state == .began {
+            PinchState.initialTransform = container.transform
+            contentPanel.bringSubviewToFront(container)
+        }
+
+        let currentTransform = container.transform
+        var newScaleX = currentTransform.a * gesture.scale
+        var newScaleY = currentTransform.d * gesture.scale
+
+        let baseWidth = imageView.bounds.width
+        let baseHeight = imageView.bounds.height
+        let maxWidth = panel.bounds.width * 0.8
+        let maxHeight = panel.bounds.height * 0.8
+        let maxAllowedScale = min(maxWidth / baseWidth, maxHeight / baseHeight)
+
+        newScaleX = min(maxAllowedScale, max(0.7, newScaleX))
+        newScaleY = min(maxAllowedScale, max(0.7, newScaleY))
         gesture.scale = 1.0
-        contentPanel.bringSubviewToFront(imageView)
+
+        let rotation = atan2(currentTransform.b, currentTransform.a)
+        let newTransform = CGAffineTransform.identity
+            .scaledBy(x: newScaleX, y: newScaleY)
+            .rotated(by: rotation)
+
+        container.transform = newTransform
+
+        if gesture.state == .ended {
+            actionStack.append(.resize(view: container, from: PinchState.initialTransform, to: newTransform))
+        }
     }
     
     @objc private func handleImageTap(_ sender: UITapGestureRecognizer) {
@@ -1138,42 +1174,53 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
     }
 
     @objc private func deleteItem(_ sender: UIButton) {
-        actionStack.append(.delete(view: container))
-        sender.superview?.removeFromSuperview()
-        print("Deleted")
+        guard let container = sender.superview else { return }
+        actionStack.append(.delete(view: container, fromSuperview: contentPanel))
+        container.removeFromSuperview()
     }
 
     // MARK: - Gesture Handling
     @objc private func handleImagePan(_ gesture: UIPanGestureRecognizer) {
         guard let movingView = gesture.view, let panel = contentPanel else { return }
-        
+
+        // Store the original center only once when gesture begins
+        struct PanState {
+            static var originalCenter = CGPoint.zero
+        }
+
+        if gesture.state == .began {
+            PanState.originalCenter = movingView.center
+            panel.bringSubviewToFront(movingView)
+        }
+
         let translation = gesture.translation(in: panel)
-        
-        var newCenter = CGPoint(x: movingView.center.x + translation.x,
-                                 y: movingView.center.y + translation.y)
-        
-        // Define limits
-        let halfWidth = movingView.bounds.width / 2
-        let halfHeight = movingView.bounds.height / 2
-        
-        let paddingTop: CGFloat = 20  // because titleContainer is overlapping -20
-        let paddingBottom: CGFloat = 20 // because toolbar overlap + constant 20
+        var newCenter = CGPoint(
+            x: PanState.originalCenter.x + translation.x,
+            y: PanState.originalCenter.y + translation.y
+        )
+
+        // Clamp to content panel bounds
+        let transformedFrame = movingView.transformedBounds
+        let halfWidth = transformedFrame.width / 2
+        let halfHeight = transformedFrame.height / 2
+
+        let paddingTop: CGFloat = 20
+        let paddingBottom: CGFloat = 20
+
         let minX = halfWidth
         let maxX = panel.bounds.width - halfWidth
         let minY = halfHeight + paddingTop
         let maxY = panel.bounds.height - halfHeight - paddingBottom
-        
-        // Clamp within bounds
+
         newCenter.x = max(minX, min(newCenter.x, maxX))
         newCenter.y = max(minY, min(newCenter.y, maxY))
-        
-        movingView.center = newCenter
-        gesture.setTranslation(.zero, in: panel)
-        
-        // Bring the container to front
-        panel.bringSubviewToFront(movingView)
 
-        actionStack.append(.move(view: movingView, from: translation, to: newCenter))
+
+        movingView.center = newCenter
+
+        if gesture.state == .ended {
+            actionStack.append(.move(view: movingView, from: PanState.originalCenter, to: newCenter))
+        }
     }
 
     // MARK: - Button Actions
@@ -1207,22 +1254,37 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
 
     @objc private func undoButtonTapped(){
         guard let lastAction = actionStack.popLast() else { return }
-        
+
         switch lastAction {
         case .add(let view):
             view.removeFromSuperview()
         case .move(let view, let from, _):
             view.center = from
-        case .delete(let view):
-            view.isHidden = false
-            view.superview?.addSubview(view)
+        case .delete(let view, let fromSuperview):
+            fromSuperview.addSubview(view)
+        case .resize(let view, let from, _):
+            view.transform = from
+        case .backgroundChange(let fromColor, _):
+            if let color = fromColor {
+                setBackgroundColor(color: color)
+            } else {
+                contentPanel.backgroundColor = nil
+            }
         }
     }
 }
 
-extension NewScrapbook: UIColorPickerViewControllerDelegate{
-    func colorPickerViewControllerDidSelectColor(_ viewController: UIColorPickerViewController){
-        setBackgroundColor(color: viewController.selectedColor)
+extension NewScrapbook: UIColorPickerViewControllerDelegate {
+    func colorPickerViewControllerDidSelectColor(_ viewController: UIColorPickerViewController) {
+        guard let panel = contentPanel else { return }
+        let previousColor = panel.backgroundColor
+        let newColor = viewController.selectedColor
+
+        // Only track changes
+        if previousColor != newColor {
+            setBackgroundColor(color: newColor)
+            actionStack.append(.backgroundChange(from: previousColor, to: newColor))
+        }
     }
 }
 
@@ -1235,5 +1297,11 @@ extension UIColor {
                       Int(red * 255),
                       Int(green * 255),
                       Int(blue * 255))
+    }
+}
+
+extension UIView {
+    var transformedBounds: CGRect {
+        return self.bounds.applying(self.transform)
     }
 }
