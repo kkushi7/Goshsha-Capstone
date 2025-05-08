@@ -20,8 +20,11 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
     private var dismissOverlay: UIView?
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     private var addedItems: [UIView] = []
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 <<<<<<< HEAD
@@ -30,6 +33,9 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
     private var addedItems: [UIView] = []
 >>>>>>> 4573a62fafd3a39378e924329d43560ac73f1b0c
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -482,8 +488,11 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
 
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         addedItems.append(container)
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 <<<<<<< HEAD
@@ -492,6 +501,9 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         addedItems.append(container)
 >>>>>>> 4573a62fafd3a39378e924329d43560ac73f1b0c
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
