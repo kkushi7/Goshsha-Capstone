@@ -15,6 +15,12 @@ class ChatbotViewController: UIViewController, UIImagePickerControllerDelegate, 
     var buyProduct: Bool = false
     private var baseHexColor: String?
     private var selectedMatchView: ScrapbookImageView?
+    private var helpBoxBottomConstraint: NSLayoutConstraint?
+    private var helpBoxTrailingConstraint: NSLayoutConstraint?
+    private var goshiBottomConstraint: NSLayoutConstraint?
+    private var goshiTrailingConstraint: NSLayoutConstraint?
+    private var goshiImageView: UIImageView?
+    private var isShowingFinalProduct = false
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -22,29 +28,27 @@ class ChatbotViewController: UIViewController, UIImagePickerControllerDelegate, 
     }
     
     private func setupUI() {
-        // Blur effect
         let blurEffectView = UIVisualEffectView(effect: UIBlurEffect(style: .extraLight))
         blurEffectView.frame = view.bounds
         blurEffectView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         view.addSubview(blurEffectView)
-        
-        // Dismiss chatbot on outside tap
-        view.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(dismissChatbot)))
-        
-        // Goshi Image
-        let goshiImageView = UIImageView(image: UIImage(named: "goshi"))
-        goshiImageView.translatesAutoresizingMaskIntoConstraints = false
-        goshiImageView.contentMode = .scaleAspectFit
-        view.addSubview(goshiImageView)
 
-        // Help Box
+        let tap = UITapGestureRecognizer(target: self, action: #selector(handleTapOutsideHelpBox(_:)))
+        tap.cancelsTouchesInView = false
+        view.addGestureRecognizer(tap)
+
+        let goshi = UIImageView(image: UIImage(named: "goshi"))
+        goshi.translatesAutoresizingMaskIntoConstraints = false
+        goshi.contentMode = .scaleAspectFit
+        view.addSubview(goshi)
+        goshiImageView = goshi
+
         helpBox = UIView()
         helpBox?.backgroundColor = UIColor(white: 0.9, alpha: 1)
         helpBox?.layer.cornerRadius = 10
         helpBox?.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(helpBox!)
 
-        // Initial message with buttons
         updateHelpBox(
             with: "Hi! What can I help you with?",
             fontSize: 18,
@@ -54,28 +58,43 @@ class ChatbotViewController: UIViewController, UIImagePickerControllerDelegate, 
             ]
         )
 
-        // Constraints
-        NSLayoutConstraint.activate([
-            helpBox!.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -50),
-            helpBox!.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -20),
-            helpBox!.widthAnchor.constraint(equalToConstant: 300),
-            helpBox!.heightAnchor.constraint(equalToConstant: 200),
+        helpBoxBottomConstraint = helpBox!.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -50)
+        helpBoxTrailingConstraint = helpBox!.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -20)
+        goshiBottomConstraint = goshi.bottomAnchor.constraint(equalTo: helpBox!.topAnchor, constant: 16)
+        goshiTrailingConstraint = goshi.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -20)
 
-            goshiImageView.bottomAnchor.constraint(equalTo: helpBox!.topAnchor),
-            goshiImageView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -20),
-            goshiImageView.widthAnchor.constraint(equalToConstant: 300),
-            goshiImageView.heightAnchor.constraint(equalToConstant: 300),
+        NSLayoutConstraint.activate([
+            helpBoxBottomConstraint!,
+            helpBoxTrailingConstraint!,
+            helpBox!.widthAnchor.constraint(equalToConstant: 300),
+            goshiBottomConstraint!,
+            goshiTrailingConstraint!,
+            goshi.widthAnchor.constraint(equalToConstant: 300),
+            goshi.heightAnchor.constraint(equalToConstant: 200),
         ])
     }
     
-    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
-        picker.dismiss(animated: true)
+    @objc private func handleTapOutsideHelpBox(_ gesture: UITapGestureRecognizer) {
+        let location = gesture.location(in: view)
+        
+        // If tapped inside helpBox or the final selected image, do nothing
+        if let help = helpBox, help.frame.contains(location) { return }
+        if let imageStack = view.viewWithTag(9999), imageStack.frame.contains(location) { return }
 
-        if let image = info[.originalImage] as? UIImage {
-            // Present color selection for face image
-            presentColorSelection(for: image) { hex in
-                self.baseHexColor = hex
-                self.startImageSelectionFlow()
+        // Otherwise, trigger dismiss logic
+        dismissChatbot()
+    }
+    
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+        picker.dismiss(animated: true) {
+            if let image = info[.originalImage] as? UIImage {
+                self.restoreGoshiAndHelpBoxToCorner()
+
+                // Then show color picker
+                self.presentColorSelection(for: image) { hex in
+                    self.baseHexColor = hex
+                    self.startImageSelectionFlow()
+                }
             }
         }
     }
@@ -112,11 +131,15 @@ class ChatbotViewController: UIViewController, UIImagePickerControllerDelegate, 
     }
 
     @objc private func dismissChatbot() {
+        if isShowingFinalProduct {
+            return // Prevent taps from doing anything
+        }
         if !findMatch {
             dismiss(animated: true)
         } else if !buyProduct {
             buyProduct = true
         } else {
+            showFinalSelectedImage()
             updateHelpBox(
                 with: "Would you like to buy this product?",
                 fontSize: 18,
@@ -125,6 +148,45 @@ class ChatbotViewController: UIViewController, UIImagePickerControllerDelegate, 
                     ("No Thank you!", #selector(buyDeclined))
                 ]
             )
+        }
+    }
+    
+    private func showFinalSelectedImage() {
+        isShowingFinalProduct = true
+        guard let stack = view.subviews.first(where: { $0.tag == 9999 }) as? UIStackView else { return }
+        
+        // Remove losing image view
+        if stack.arrangedSubviews.count == 2 {
+            let betterView = selectedMatchView?.image
+            let first = stack.arrangedSubviews[0] as? UIImageView
+            let second = stack.arrangedSubviews[1] as? UIImageView
+
+            if let first = first, let second = second {
+                if first.image != betterView {
+                    stack.removeArrangedSubview(first)
+                    first.removeFromSuperview()
+                } else {
+                    stack.removeArrangedSubview(second)
+                    second.removeFromSuperview()
+                }
+            }
+        }
+
+        // Resize stack and image
+        if let imageView = stack.arrangedSubviews.first as? UIImageView {
+            NSLayoutConstraint.deactivate(stack.constraints)
+            imageView.layer.borderWidth = 0
+
+            NSLayoutConstraint.activate([
+                stack.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+                stack.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: -60),
+                stack.widthAnchor.constraint(equalToConstant: 200),
+                stack.heightAnchor.constraint(equalToConstant: 240)
+            ])
+
+            UIView.animate(withDuration: 0.3) {
+                self.view.layoutIfNeeded()
+            }
         }
     }
     
@@ -139,10 +201,77 @@ class ChatbotViewController: UIViewController, UIImagePickerControllerDelegate, 
     @objc private func findMatchTapped() {
         updateHelpBox(with: "Shore-ly! I can do that for you", fontSize: 30)
         findMatch = true
-        
-        // auto move on after 1.5s
+
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            self.presentCameraForBaseTone()
+            self.moveGoshiAndHelpBoxToCenter()
+        }
+    }
+    
+    private func moveGoshiAndHelpBoxToCenter() {
+        helpBoxBottomConstraint?.isActive = false
+        helpBoxTrailingConstraint?.isActive = false
+        goshiBottomConstraint?.isActive = false
+        goshiTrailingConstraint?.isActive = false
+
+        helpBoxBottomConstraint = helpBox!.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: 120)
+        helpBoxTrailingConstraint = helpBox!.centerXAnchor.constraint(equalTo: view.centerXAnchor)
+        goshiBottomConstraint = goshiImageView!.bottomAnchor.constraint(equalTo: helpBox!.topAnchor, constant: 16)
+        goshiTrailingConstraint = goshiImageView!.centerXAnchor.constraint(equalTo: view.centerXAnchor)
+
+        NSLayoutConstraint.activate([
+            helpBoxBottomConstraint!,
+            helpBoxTrailingConstraint!,
+            goshiBottomConstraint!,
+            goshiTrailingConstraint!
+        ])
+
+        UIView.animate(withDuration: 0.4) {
+            self.view.layoutIfNeeded()
+        }
+
+        updateHelpBox(
+            with: "We need a photo of your face to find your perfect shade.\nPlease make sure you’re not wearing any makeup products, and are in a well-lit space.",
+            fontSize: 18,
+            buttons: [
+                ("Take Picture", #selector(takeBareFacePicture)),
+                ("Cancel", #selector(cancelBareFaceFlow))
+            ]
+        )
+    }
+    
+    @objc private func takeBareFacePicture() {
+        restoreGoshiAndHelpBoxToCorner()
+        presentCameraForBaseTone()
+    }
+
+    @objc private func cancelBareFaceFlow() {
+        restoreGoshiAndHelpBoxToCorner()
+        dismiss(animated: true)
+    }
+    
+    private func restoreGoshiAndHelpBoxToCorner() {
+        NSLayoutConstraint.deactivate([
+            helpBoxBottomConstraint,
+            helpBoxTrailingConstraint,
+            goshiBottomConstraint,
+            goshiTrailingConstraint
+        ].compactMap { $0 })
+
+        helpBoxBottomConstraint = helpBox!.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -50)
+        helpBoxTrailingConstraint = helpBox!.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -20)
+
+        goshiBottomConstraint = goshiImageView!.bottomAnchor.constraint(equalTo: helpBox!.topAnchor)
+        goshiTrailingConstraint = goshiImageView!.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -20)
+
+        NSLayoutConstraint.activate([
+            helpBoxBottomConstraint!,
+            helpBoxTrailingConstraint!,
+            goshiBottomConstraint!,
+            goshiTrailingConstraint!
+        ])
+
+        UIView.animate(withDuration: 0.4) {
+            self.view.layoutIfNeeded()
         }
     }
 
@@ -245,6 +374,56 @@ class ChatbotViewController: UIViewController, UIImagePickerControllerDelegate, 
 
         let better = diff1 < diff2 ? "first" : "second"
         updateHelpBox(with: "Between these two, I think the \(better) one is your tidal match!", fontSize: 26)
+        showComparisonImages(image1: view1.image, image2: view2.image, highlightFirst: diff1 < diff2)
+    }
+    
+    private func showComparisonImages(image1: UIImage?, image2: UIImage?, highlightFirst: Bool) {
+        guard let image1 = image1, let image2 = image2 else { return }
+
+        // Remove existing image preview
+        view.subviews.filter { $0.tag == 9999 }.forEach { $0.removeFromSuperview() }
+
+        let container = UIStackView()
+        container.axis = .horizontal
+        container.spacing = 16
+        container.distribution = .fillEqually
+        container.translatesAutoresizingMaskIntoConstraints = false
+        container.tag = 9999
+        view.addSubview(container)
+
+        let imageView1 = UIImageView(image: image1)
+        let imageView2 = UIImageView(image: image2)
+
+        [imageView1, imageView2].forEach {
+            $0.contentMode = .scaleAspectFit
+            $0.clipsToBounds = true
+            $0.layer.cornerRadius = 12
+            $0.layer.borderWidth = 1
+            $0.layer.borderColor = UIColor.black.cgColor
+            $0.heightAnchor.constraint(equalToConstant: 280).isActive = true
+        }
+
+        // Emphasize the winner
+        if highlightFirst {
+            imageView1.layer.borderWidth = 5
+        } else {
+            imageView2.layer.borderWidth = 5
+        }
+
+        container.addArrangedSubview(imageView1)
+        container.addArrangedSubview(imageView2)
+
+        NSLayoutConstraint.activate([
+            container.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 100),
+            container.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            container.widthAnchor.constraint(equalToConstant: 350),
+            container.heightAnchor.constraint(equalToConstant: 300)
+        ])
+
+        if let goshi = goshiImageView, let help = helpBox {
+            view.bringSubviewToFront(goshi)
+            view.bringSubviewToFront(help)
+        }
     }
     
     func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
@@ -310,6 +489,7 @@ class ChatbotViewController: UIViewController, UIImagePickerControllerDelegate, 
         helpLabel.font = UIFont.systemFont(ofSize: fontSize)
         helpLabel.numberOfLines = 0
         helpLabel.translatesAutoresizingMaskIntoConstraints = false
+        helpLabel.setContentHuggingPriority(.required, for: .vertical)
         helpBox?.addSubview(helpLabel)
 
         var constraints: [NSLayoutConstraint] = [
