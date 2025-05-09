@@ -410,6 +410,11 @@ class ChatbotViewController: UIViewController, UIImagePickerControllerDelegate, 
         let picker = UIImagePickerController()
         picker.sourceType = .camera
         picker.delegate = self
+
+        if UIImagePickerController.isCameraDeviceAvailable(.front) {
+            picker.cameraDevice = .front
+        }
+
         present(picker, animated: true)
     }
 
