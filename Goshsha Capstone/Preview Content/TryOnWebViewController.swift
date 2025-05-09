@@ -189,10 +189,18 @@ class TryOnWebViewController: UIViewController, WKNavigationDelegate, WKUIDelega
                 ]
 
                 self.saveToScrapbook(photoData: photoData) {
-                    self.openScrapbookEditPage()
+                    self.showSavedAlert()
                 }
             }
         }
+    }
+    
+    private func showSavedAlert() {
+        let alert = UIAlertController(title: "Saved", message: "Image has been added to your scrapbook.", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default) { _ in
+            self.openScrapbookEditPage()
+        })
+        present(alert, animated: true, completion: nil)
     }
 
     @objc func tryOnButtonTapped() {
