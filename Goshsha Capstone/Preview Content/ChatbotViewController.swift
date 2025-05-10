@@ -315,8 +315,11 @@ class ChatbotViewController: UIViewController, UIImagePickerControllerDelegate, 
 
                     let results = visualMatches.compactMap { match -> LensResult? in
                         if let imageUrl = match["image"] as? String,
-                           let linkUrl = match["link"] as? String {
-                            return LensResult(imageUrl: imageUrl, linkUrl: linkUrl)
+                           let linkUrl = match["link"] as? String,
+                           let title = match["title"] as? String,
+                           let source = match["source"] as? String {
+                            
+                            return LensResult(imageUrl: imageUrl, linkUrl: linkUrl, title: title, source: source)
                         } else {
                             return nil
                         }

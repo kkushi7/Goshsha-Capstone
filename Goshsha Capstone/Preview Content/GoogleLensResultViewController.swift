@@ -7,26 +7,30 @@
 
 import UIKit
 
+let imageCache = NSCache<NSString, UIImage>()
+
 struct LensResult {
     let imageUrl: String
     let linkUrl: String
+    let title: String?
+    let source: String?
 }
 
 class GoogleLensResultViewController: UIViewController, UICollectionViewDelegate, UICollectionViewDataSource {
-    
+
     var results: [LensResult] = []
     private var collectionView: UICollectionView!
-    
+
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .white
         setupDoneButton()
         setupCollectionView()
     }
-    
+
     private func setupCollectionView() {
         let layout = UICollectionViewFlowLayout()
-        layout.itemSize = CGSize(width: view.bounds.width/2 - 16, height: view.bounds.width/2 - 16)
+        layout.itemSize = CGSize(width: view.bounds.width/2 - 16, height: view.bounds.width/2 + 40)
         layout.minimumInteritemSpacing = 8
         layout.minimumLineSpacing = 8
         layout.sectionInset = UIEdgeInsets(top: 8, left: 8, bottom: 8, right: 8)
@@ -46,7 +50,7 @@ class GoogleLensResultViewController: UIViewController, UICollectionViewDelegate
             collectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
     }
-    
+
     private func setupDoneButton() {
         let doneButton = UIButton(type: .system)
         doneButton.setTitle("Done", for: .normal)
@@ -67,18 +71,18 @@ class GoogleLensResultViewController: UIViewController, UICollectionViewDelegate
     @objc private func doneButtonTapped() {
         self.presentingViewController?.presentingViewController?.dismiss(animated: true, completion: nil)
     }
-    
+
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return results.count
     }
-    
+
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ResultCell", for: indexPath) as! ResultCell
         let result = results[indexPath.item]
         cell.configure(with: result)
         return cell
     }
-    
+
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         let result = results[indexPath.item]
         if let url = URL(string: result.linkUrl) {
@@ -89,25 +93,63 @@ class GoogleLensResultViewController: UIViewController, UICollectionViewDelegate
 
 class ResultCell: UICollectionViewCell {
     private let imageView = UIImageView()
+    private let titleLabel = UILabel()
+    private let sourceLabel = UILabel()
+    private let stackView = UIStackView()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
-        contentView.addSubview(imageView)
+
+        titleLabel.font = UIFont.systemFont(ofSize: 12)
+        titleLabel.numberOfLines = 2
+
+        sourceLabel.font = UIFont.systemFont(ofSize: 10)
+        sourceLabel.textColor = .gray
+
         imageView.contentMode = .scaleAspectFit
-        imageView.frame = contentView.bounds
-        imageView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        imageView.heightAnchor.constraint(equalToConstant: 100).isActive = true
+
+        stackView.axis = .vertical
+        stackView.spacing = 4
+        stackView.alignment = .fill
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+
+        stackView.addArrangedSubview(imageView)
+        stackView.addArrangedSubview(titleLabel)
+        stackView.addArrangedSubview(sourceLabel)
+
+        contentView.addSubview(stackView)
+
+        NSLayoutConstraint.activate([
+            stackView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 4),
+            stackView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 4),
+            stackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -4),
+            stackView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -4)
+        ])
     }
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
 
     func configure(with result: LensResult) {
-        if let url = URL(string: result.imageUrl) {
+        titleLabel.text = result.title
+        sourceLabel.text = result.source
+        imageView.image = UIImage(named: "no image")
+
+        let cacheKey = NSString(string: result.imageUrl)
+        if let cachedImage = imageCache.object(forKey: cacheKey) {
+            self.imageView.image = cachedImage
+        } else if let url = URL(string: result.imageUrl) {
             URLSession.shared.dataTask(with: url) { data, _, _ in
-                if let data = data {
+                if let data = data, let image = UIImage(data: data) {
+                    imageCache.setObject(image, forKey: cacheKey)
                     DispatchQueue.main.async {
-                        self.imageView.image = UIImage(data: data)
+                        self.imageView.image = image
+                    }
+                } else {
+                    DispatchQueue.main.async {
+                        self.imageView.image = UIImage(named: "no image")
                     }
                 }
             }.resume()
