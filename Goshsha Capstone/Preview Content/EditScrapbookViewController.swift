@@ -53,7 +53,7 @@ class EditScrapbookViewController: UIViewController, UITextFieldDelegate, UIImag
     
     func showScrapBookNameLabel() {
         let label = UILabel()
-        label.text = "YOUR SCRAPBOOK"
+        label.text = "TRY-ON Room"
         label.textAlignment = .center
         label.font = UIFont(name: "Helvetica-Bold", size: 34)
         label.textColor = .black
