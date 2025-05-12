@@ -83,7 +83,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
 
     private func createTitleLabel() -> UILabel {
         let titleLabel = UILabel()
-        titleLabel.text = "Your Scrapbook"
+        titleLabel.text = "TRY-ON Room"
         titleLabel.textColor = .white
         titleLabel.backgroundColor = .black
         titleLabel.font = UIFont(name: "Poppins-Bold", size: 28)
