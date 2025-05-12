@@ -250,12 +250,10 @@ class TryOnWebViewController: UIViewController, WKNavigationDelegate, WKUIDelega
     }
     
     // Hide or show doneButton based on tryOnButton presence
-    private func updateDoneButtonVisibility() {
-        if tryOnButton != nil {
-            self.navigationItem.leftBarButtonItem = tryOnButton
-        } else {
-            self.navigationItem.leftBarButtonItem = doneButton
-        }
+    private func updateLeftButton(title: String, action: Selector) {
+        let backButton = UIBarButtonItem(title: title, style: .plain, target: self, action: action)
+        backButton.tintColor = .black
+        self.navigationItem.leftBarButtonItem = backButton
     }
     
     // Handle navigation actions to manage the "Try On" button visibility
@@ -265,17 +263,19 @@ class TryOnWebViewController: UIViewController, WKNavigationDelegate, WKUIDelega
         // Show "Try On" button when user taps a link
         if navigationAction.navigationType == .linkActivated {
             if tryOnButton == nil {
-                let buttonImage = UIImage(named: "LipstickIcon")
-                tryOnButton = UIBarButtonItem(image: buttonImage, style: .plain, target: self, action: #selector(tryOnButtonTapped))
-                tryOnButton?.tintColor = .black
-
-                // Replace Done button with Try-On button
-                self.navigationItem.leftBarButtonItem = tryOnButton
-                
+                updateLeftButton(title: "Back", action: #selector(backButtonTapped))
             }
         }
         
         decisionHandler(.allow)
+    }
+    
+    @objc func backButtonTapped() {
+        if webView.canGoBack {
+            webView.goBack()
+        } else {
+            self.dismiss(animated: true, completion: nil)
+        }
     }
     
     // capture screenshot
