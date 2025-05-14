@@ -68,6 +68,10 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
 
         // Chat Button
         chatButton = setupButton(imageName: "chatbotIcon", action: #selector(chatTapped))
+        chatButton.layer.shadowColor = UIColor.black.cgColor
+        chatButton.layer.shadowOpacity = 0.25
+        chatButton.layer.shadowRadius = 8
+        chatButton.layer.shadowOffset = CGSize(width: 0, height: 4)
         view.addSubview(chatButton)
         view.bringSubviewToFront(chatButton)
 
