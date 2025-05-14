@@ -59,8 +59,8 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         titleContainer.addSubview(titleLabel)
 
         // Save Button
-        let saveButton = setupButton(imageName: "save", action: #selector(saveScrapbook))
-        titleContainer.addSubview(saveButton)
+        // let saveButton = setupButton(imageName: "save", action: #selector(saveScrapbook))
+        //titleContainer.addSubview(saveButton)
 
         // Content Panel
         contentPanel = createContentPanel()
@@ -204,10 +204,10 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
             returnButton.heightAnchor.constraint(equalToConstant: 40),
 
             // Save Button
-            saveButton.centerYAnchor.constraint(equalTo: titleLabel.centerYAnchor),
-            saveButton.trailingAnchor.constraint(equalTo: titleContainer.trailingAnchor, constant: -20),
-            saveButton.widthAnchor.constraint(equalToConstant: 40),
-            saveButton.heightAnchor.constraint(equalToConstant: 40),
+           // saveButton.centerYAnchor.constraint(equalTo: titleLabel.centerYAnchor),
+           // saveButton.trailingAnchor.constraint(equalTo: titleContainer.trailingAnchor, constant: -20),
+           // saveButton.widthAnchor.constraint(equalToConstant: 40),
+           // saveButton.heightAnchor.constraint(equalToConstant: 40),
 
             // Content Panel
             contentPanel.topAnchor.constraint(equalTo: titleContainer.bottomAnchor, constant: -20),
@@ -356,6 +356,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
             // No valid background found
             completion(["type": "none"])
         }
+        saveScrapbook()
     }
     
     private func uploadPhoto(image: UIImage, completion: @escaping (URL?) -> Void) {
@@ -386,6 +387,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
                 }
             }
         }
+        saveScrapbook()
     }
     
     private func clearExistingData(uid: String, completion: @escaping () -> Void) {
@@ -439,6 +441,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
             print("All previous data cleared. Ready to save new scrapbook!")
             completion()
         }
+        saveScarpbook()
     }
     
     @objc func returnButtonPressed() {
@@ -543,6 +546,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handleImagePan(_:)))
         container.addGestureRecognizer(panGesture)
         
+        saveScrapbook()
     }
     
     @objc private func applyFrame(_ sender: UIButton) {
@@ -605,6 +609,8 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         ])
 
         imageView.hasPolaroidFrame = true
+
+        saveScrapbook()
     }
     
     @objc private func showDeleteButton(_ gesture: UILongPressGestureRecognizer) {
@@ -824,6 +830,8 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleStickerTap(_:)))
         container.addGestureRecognizer(tapGesture)
+
+        saveScrapbook()
     }
     
     @objc private func handleStickerTap(_ gesture: UITapGestureRecognizer) {
@@ -1120,6 +1128,8 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
              backgroundImageView.leadingAnchor.constraint(equalTo: panel.leadingAnchor),
              backgroundImageView.trailingAnchor.constraint(equalTo: panel.trailingAnchor)
          ])
+
+         saveScrapbook()
     }
     
     private func setBackgroundColor(color: UIColor) {
@@ -1127,6 +1137,8 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         panel.subviews.first(where: { $0 is UIImageView })?.removeFromSuperview()
         panel.layer.sublayers?.removeAll(where: { $0 is CAGradientLayer })
         panel.backgroundColor = color
+
+        saveScrapbook()
     }
 
     @objc private func openColorPicker(){
@@ -1224,6 +1236,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
 
         if gesture.state == .ended {
             actionStack.append(.move(view: movingView, from: PanState.originalCenter, to: newCenter))
+            saveScrapbook()
         }
     }
 
