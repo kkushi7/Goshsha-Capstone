@@ -111,7 +111,7 @@ class EditScrapbookViewController: UIViewController, UITextFieldDelegate, UIImag
                 bottomToolbar.heightAnchor.constraint(equalToConstant: 40)
             ])
             
-            let backButton = UIBarButtonItem(image: UIImage(systemName: "arrow.backward"), style: .plain, target: self, action: #selector(backButtonTapped))
+            let backButton = UIBarButtonItem(title: "<", style: .plain, target: self, action: #selector(backButtonTapped))
             backButton.tintColor = .blue
             
             let saveButton = UIBarButtonItem(image: UIImage(systemName: "lock"), style: .plain, target: self, action: #selector(saveButtonTapped))
