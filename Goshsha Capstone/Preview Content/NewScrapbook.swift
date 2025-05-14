@@ -59,8 +59,8 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         titleContainer.addSubview(titleLabel)
 
         // Save Button
-        // let saveButton = setupButton(imageName: "save", action: #selector(saveScrapbook))
-        //titleContainer.addSubview(saveButton)
+//        let saveButton = setupButton(imageName: "save", action: #selector(saveScrapbook))
+//        titleContainer.addSubview(saveButton)
 
         // Content Panel
         contentPanel = createContentPanel()
@@ -82,7 +82,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         view.bringSubviewToFront(titleContainer)
 
         // Constraints
-        setupConstraints(titleContainer: titleContainer, returnButton: returnButton, titleLabel: titleLabel, saveButton: saveButton, chatButton: chatButton, toolbar: toolbar)
+        setupConstraints(titleContainer: titleContainer, returnButton: returnButton, titleLabel: titleLabel, chatButton: chatButton, toolbar: toolbar)
     }
 
     private func createTitleLabel() -> UILabel {
@@ -186,7 +186,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         return UIBarButtonItem(customView: outerView)
     }
 
-    private func setupConstraints(titleContainer: UIView, returnButton: UIButton, titleLabel: UILabel, saveButton: UIButton, chatButton: UIButton, toolbar: UIToolbar) {
+    private func setupConstraints(titleContainer: UIView, returnButton: UIButton, titleLabel: UILabel, chatButton: UIButton, toolbar: UIToolbar) {
         NSLayoutConstraint.activate([
             titleContainer.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: -20),
             titleContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor),
@@ -204,10 +204,10 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
             returnButton.heightAnchor.constraint(equalToConstant: 40),
 
             // Save Button
-           // saveButton.centerYAnchor.constraint(equalTo: titleLabel.centerYAnchor),
-           // saveButton.trailingAnchor.constraint(equalTo: titleContainer.trailingAnchor, constant: -20),
-           // saveButton.widthAnchor.constraint(equalToConstant: 40),
-           // saveButton.heightAnchor.constraint(equalToConstant: 40),
+//            saveButton.centerYAnchor.constraint(equalTo: titleLabel.centerYAnchor),
+//            saveButton.trailingAnchor.constraint(equalTo: titleContainer.trailingAnchor, constant: -20),
+//            saveButton.widthAnchor.constraint(equalToConstant: 40),
+//            saveButton.heightAnchor.constraint(equalToConstant: 40),
 
             // Content Panel
             contentPanel.topAnchor.constraint(equalTo: titleContainer.bottomAnchor, constant: -20),
@@ -306,10 +306,10 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
                             print("Error saving scrapbook: \(error.localizedDescription)")
                         } else {
                             print("Scrapbook saved successfully!")
-                            
-                            let alert = UIAlertController(title: "Saved", message: "Your scrapbook has been saved!", preferredStyle: .alert)
-                            alert.addAction(UIAlertAction(title: "OK", style: .default))
-                            self.present(alert, animated: true)
+//                            
+//                            let alert = UIAlertController(title: "Saved", message: "Your scrapbook has been saved!", preferredStyle: .alert)
+//                            alert.addAction(UIAlertAction(title: "OK", style: .default))
+//                            self.present(alert, animated: true)
                         }
                     }
                 }
@@ -356,7 +356,6 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
             // No valid background found
             completion(["type": "none"])
         }
-        saveScrapbook()
     }
     
     private func uploadPhoto(image: UIImage, completion: @escaping (URL?) -> Void) {
@@ -387,7 +386,6 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
                 }
             }
         }
-        saveScrapbook()
     }
     
     private func clearExistingData(uid: String, completion: @escaping () -> Void) {
@@ -441,7 +439,6 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
             print("All previous data cleared. Ready to save new scrapbook!")
             completion()
         }
-        saveScarpbook()
     }
     
     @objc func returnButtonPressed() {
@@ -557,12 +554,15 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         applyFrame(to: imageView)
     }
     
-    func applyFrame(to imageView: ScrapbookImageView) {
+    func applyFrame(to imageView: ScrapbookImageView, skipSave: Bool = false) {
         guard let container = imageView.superview else { return }
 
         if let existingFrame = container.viewWithTag(1234) {
             existingFrame.removeFromSuperview()
             imageView.hasPolaroidFrame = false
+            if !skipSave {
+                saveScrapbook()
+            }
             return
         }
 
@@ -939,7 +939,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
            let loadedImageView = lastContainer.subviews.first as? ScrapbookImageView {
             loadedImageView.firebaseURL = urlString
             if hasFrame {
-                self.applyFrame(to: loadedImageView)
+                self.applyFrame(to: loadedImageView, skipSave: true)
             }
             return lastContainer
         }
@@ -988,7 +988,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
                    let loadedImageView = lastContainer.subviews.first as? ScrapbookImageView {
                     loadedImageView.firebaseURL = urlString
                     if hasFrame {
-                        self.applyFrame(to: loadedImageView)
+                        self.applyFrame(to: loadedImageView, skipSave: true)
                     }
                 }
             }
