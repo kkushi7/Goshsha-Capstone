@@ -67,7 +67,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         view.addSubview(contentPanel)
 
         // Chat Button
-        chatButton = setupButton(imageName: "goshi", action: #selector(chatTapped))
+        chatButton = setupButton(imageName: "chatbotIcon", action: #selector(chatTapped))
         view.addSubview(chatButton)
         view.bringSubviewToFront(chatButton)
 
@@ -218,10 +218,10 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
             toolbar.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
 
             // Chat Button
-            chatButton.trailingAnchor.constraint(equalTo: contentPanel.trailingAnchor, constant: 0),
-            chatButton.bottomAnchor.constraint(equalTo: contentPanel.bottomAnchor, constant: -10),
-            chatButton.widthAnchor.constraint(equalToConstant: 150),
-            chatButton.heightAnchor.constraint(equalToConstant: 150)
+            chatButton.trailingAnchor.constraint(equalTo: contentPanel.trailingAnchor, constant: -10),
+            chatButton.bottomAnchor.constraint(equalTo: contentPanel.bottomAnchor, constant: -30),
+            chatButton.widthAnchor.constraint(equalToConstant: 100),
+            chatButton.heightAnchor.constraint(equalToConstant: 100)
 
         ])
     }
