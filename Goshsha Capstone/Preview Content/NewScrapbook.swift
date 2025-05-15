@@ -128,6 +128,8 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
             .flexibleSpace(),
             createLabeledToolbarItem(imageName: "image", title: "IMAGES", action: #selector(cameraTapped)),
             .flexibleSpace(),
+            createLabeledToolbarItem(imageName: "goshi", title: "GOSHI", action: #selector(goshiTapped)),
+            .flexibleSpace(),
             createLabeledToolbarItem(imageName: "undo", title: "UNDO", action: #selector(undoButtonTapped)),
             .flexibleSpace()
         ]
@@ -1284,6 +1286,12 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
                 contentPanel.backgroundColor = nil
             }
         }
+    }
+
+    @objc private func goshiTapped(){
+        let chatbotVC = ChatbotViewController()
+        chatbotVC.modalPresentationStyle = .overFullScreen
+        present(chatbotVC, animated: true)
     }
 }
 
