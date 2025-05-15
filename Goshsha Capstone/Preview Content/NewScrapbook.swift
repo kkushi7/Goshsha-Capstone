@@ -58,22 +58,22 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         let titleLabel = createTitleLabel()
         titleContainer.addSubview(titleLabel)
 
-        // Save Button
-//        let saveButton = setupButton(imageName: "save", action: #selector(saveScrapbook))
-//        titleContainer.addSubview(saveButton)
+        // Undo Button
+        let undoButton = setupButton(imageName: "undo", action: #selector(undoButtonTapped))
+        titleContainer.addSubview(undoButton)
 
         // Content Panel
         contentPanel = createContentPanel()
         view.addSubview(contentPanel)
 
-        // Chat Button
-        chatButton = setupButton(imageName: "chatbotIcon", action: #selector(chatTapped))
-        chatButton.layer.shadowColor = UIColor.black.cgColor
-        chatButton.layer.shadowOpacity = 0.25
-        chatButton.layer.shadowRadius = 8
-        chatButton.layer.shadowOffset = CGSize(width: 0, height: 4)
-        view.addSubview(chatButton)
-        view.bringSubviewToFront(chatButton)
+//        // Chat Button
+//        chatButton = setupButton(imageName: "chatbotIcon", action: #selector(chatTapped))
+//        chatButton.layer.shadowColor = UIColor.black.cgColor
+//        chatButton.layer.shadowOpacity = 0.25
+//        chatButton.layer.shadowRadius = 8
+//        chatButton.layer.shadowOffset = CGSize(width: 0, height: 4)
+//        view.addSubview(chatButton)
+//        view.bringSubviewToFront(chatButton)
 
         // Toolbar
         let toolbar = createToolbar()
@@ -82,7 +82,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         view.bringSubviewToFront(titleContainer)
 
         // Constraints
-        setupConstraints(titleContainer: titleContainer, returnButton: returnButton, titleLabel: titleLabel, chatButton: chatButton, toolbar: toolbar)
+        setupConstraints(titleContainer: titleContainer, returnButton: returnButton, titleLabel: titleLabel, undoButton: undoButton, toolbar: toolbar)
     }
 
     private func createTitleLabel() -> UILabel {
@@ -134,8 +134,6 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
             .flexibleSpace(),
             createLabeledToolbarItem(imageName: "goshi", title: "GOSHI", action: #selector(goshiTapped)),
             .flexibleSpace(),
-            createLabeledToolbarItem(imageName: "undo", title: "UNDO", action: #selector(undoButtonTapped)),
-            .flexibleSpace()
         ]
         
         return toolbar
@@ -188,7 +186,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         return UIBarButtonItem(customView: outerView)
     }
 
-    private func setupConstraints(titleContainer: UIView, returnButton: UIButton, titleLabel: UILabel, chatButton: UIButton, toolbar: UIToolbar) {
+    private func setupConstraints(titleContainer: UIView, returnButton: UIButton, titleLabel: UILabel, undoButton: UIButton, toolbar: UIToolbar) {
         NSLayoutConstraint.activate([
             titleContainer.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: -20),
             titleContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor),
@@ -205,11 +203,11 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
             returnButton.widthAnchor.constraint(equalToConstant: 40),
             returnButton.heightAnchor.constraint(equalToConstant: 40),
 
-            // Save Button
-//            saveButton.centerYAnchor.constraint(equalTo: titleLabel.centerYAnchor),
-//            saveButton.trailingAnchor.constraint(equalTo: titleContainer.trailingAnchor, constant: -20),
-//            saveButton.widthAnchor.constraint(equalToConstant: 40),
-//            saveButton.heightAnchor.constraint(equalToConstant: 40),
+            // Undo Button
+            undoButton.centerYAnchor.constraint(equalTo: titleLabel.centerYAnchor),
+            undoButton.trailingAnchor.constraint(equalTo: titleContainer.trailingAnchor, constant: -20),
+            undoButton.widthAnchor.constraint(equalToConstant: 40),
+            undoButton.heightAnchor.constraint(equalToConstant: 40),
 
             // Content Panel
             contentPanel.topAnchor.constraint(equalTo: titleContainer.bottomAnchor, constant: -20),
@@ -223,12 +221,11 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
             toolbar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             toolbar.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
 
-            // Chat Button
-            chatButton.trailingAnchor.constraint(equalTo: contentPanel.trailingAnchor, constant: -10),
-            chatButton.bottomAnchor.constraint(equalTo: contentPanel.bottomAnchor, constant: -30),
-            chatButton.widthAnchor.constraint(equalToConstant: 100),
-            chatButton.heightAnchor.constraint(equalToConstant: 100)
-
+//            // Chat Button
+//            chatButton.trailingAnchor.constraint(equalTo: contentPanel.trailingAnchor, constant: -10),
+//            chatButton.bottomAnchor.constraint(equalTo: contentPanel.bottomAnchor, constant: -30),
+//            chatButton.widthAnchor.constraint(equalToConstant: 100),
+//            chatButton.heightAnchor.constraint(equalToConstant: 100)
         ])
     }
 
