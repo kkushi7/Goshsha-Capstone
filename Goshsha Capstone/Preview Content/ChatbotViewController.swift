@@ -39,16 +39,6 @@ class ChatbotViewController: UIViewController, UIImagePickerControllerDelegate, 
         goshi.translatesAutoresizingMaskIntoConstraints = false
         goshi.contentMode = .scaleAspectFit
 
-        goshi.layer.borderColor = UIColor.white.cgColor
-        goshi.layer.borderWidth = 3
-        goshi.clipsToBounds = true
-
-        goshi.layer.shadowColor = UIColor.white.cgColor
-        goshi.layer.shadowRadius = 4
-        goshi.shadowOpacity = 1
-        goshi.layer.shadowOffset = .zero
-        goshi.clipsToBounds = false
-
         view.addSubview(goshi)
         goshiImageView = goshi
 

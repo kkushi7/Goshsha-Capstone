@@ -35,6 +35,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         setupUI()
         loadAllLayersInOrder()
         loadBackground()
+        actionStack.removeAll()
     }
 
     // MARK: - UI Setup
@@ -58,18 +59,22 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         let titleLabel = createTitleLabel()
         titleContainer.addSubview(titleLabel)
 
-        // Save Button
-        // let saveButton = setupButton(imageName: "save", action: #selector(saveScrapbook))
-        //titleContainer.addSubview(saveButton)
+        // Undo Button
+        let undoButton = setupButton(imageName: "undo", action: #selector(undoButtonTapped))
+        titleContainer.addSubview(undoButton)
 
         // Content Panel
         contentPanel = createContentPanel()
         view.addSubview(contentPanel)
 
-        // Chat Button
-        chatButton = setupButton(imageName: "goshi", action: #selector(chatTapped))
-        view.addSubview(chatButton)
-        view.bringSubviewToFront(chatButton)
+//        // Chat Button
+//        chatButton = setupButton(imageName: "chatbotIcon", action: #selector(chatTapped))
+//        chatButton.layer.shadowColor = UIColor.black.cgColor
+//        chatButton.layer.shadowOpacity = 0.25
+//        chatButton.layer.shadowRadius = 8
+//        chatButton.layer.shadowOffset = CGSize(width: 0, height: 4)
+//        view.addSubview(chatButton)
+//        view.bringSubviewToFront(chatButton)
 
         // Toolbar
         let toolbar = createToolbar()
@@ -78,7 +83,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         view.bringSubviewToFront(titleContainer)
 
         // Constraints
-        setupConstraints(titleContainer: titleContainer, returnButton: returnButton, titleLabel: titleLabel, saveButton: saveButton, chatButton: chatButton, toolbar: toolbar)
+        setupConstraints(titleContainer: titleContainer, returnButton: returnButton, titleLabel: titleLabel, undoButton: undoButton, toolbar: toolbar)
     }
 
     private func createTitleLabel() -> UILabel {
@@ -130,8 +135,6 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
             .flexibleSpace(),
             createLabeledToolbarItem(imageName: "goshi", title: "GOSHI", action: #selector(goshiTapped)),
             .flexibleSpace(),
-            createLabeledToolbarItem(imageName: "undo", title: "UNDO", action: #selector(undoButtonTapped)),
-            .flexibleSpace()
         ]
         
         return toolbar
@@ -184,7 +187,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         return UIBarButtonItem(customView: outerView)
     }
 
-    private func setupConstraints(titleContainer: UIView, returnButton: UIButton, titleLabel: UILabel, saveButton: UIButton, chatButton: UIButton, toolbar: UIToolbar) {
+    private func setupConstraints(titleContainer: UIView, returnButton: UIButton, titleLabel: UILabel, undoButton: UIButton, toolbar: UIToolbar) {
         NSLayoutConstraint.activate([
             titleContainer.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: -20),
             titleContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor),
@@ -201,11 +204,11 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
             returnButton.widthAnchor.constraint(equalToConstant: 40),
             returnButton.heightAnchor.constraint(equalToConstant: 40),
 
-            // Save Button
-           // saveButton.centerYAnchor.constraint(equalTo: titleLabel.centerYAnchor),
-           // saveButton.trailingAnchor.constraint(equalTo: titleContainer.trailingAnchor, constant: -20),
-           // saveButton.widthAnchor.constraint(equalToConstant: 40),
-           // saveButton.heightAnchor.constraint(equalToConstant: 40),
+            // Undo Button
+            undoButton.centerYAnchor.constraint(equalTo: titleLabel.centerYAnchor),
+            undoButton.trailingAnchor.constraint(equalTo: titleContainer.trailingAnchor, constant: -20),
+            undoButton.widthAnchor.constraint(equalToConstant: 40),
+            undoButton.heightAnchor.constraint(equalToConstant: 40),
 
             // Content Panel
             contentPanel.topAnchor.constraint(equalTo: titleContainer.bottomAnchor, constant: -20),
@@ -219,12 +222,11 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
             toolbar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             toolbar.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
 
-            // Chat Button
-            chatButton.trailingAnchor.constraint(equalTo: contentPanel.trailingAnchor, constant: 0),
-            chatButton.bottomAnchor.constraint(equalTo: contentPanel.bottomAnchor, constant: -10),
-            chatButton.widthAnchor.constraint(equalToConstant: 150),
-            chatButton.heightAnchor.constraint(equalToConstant: 150)
-
+//            // Chat Button
+//            chatButton.trailingAnchor.constraint(equalTo: contentPanel.trailingAnchor, constant: -10),
+//            chatButton.bottomAnchor.constraint(equalTo: contentPanel.bottomAnchor, constant: -30),
+//            chatButton.widthAnchor.constraint(equalToConstant: 100),
+//            chatButton.heightAnchor.constraint(equalToConstant: 100)
         ])
     }
 
@@ -304,10 +306,10 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
                             print("Error saving scrapbook: \(error.localizedDescription)")
                         } else {
                             print("Scrapbook saved successfully!")
-                            
-                            let alert = UIAlertController(title: "Saved", message: "Your scrapbook has been saved!", preferredStyle: .alert)
-                            alert.addAction(UIAlertAction(title: "OK", style: .default))
-                            self.present(alert, animated: true)
+//                            
+//                            let alert = UIAlertController(title: "Saved", message: "Your scrapbook has been saved!", preferredStyle: .alert)
+//                            alert.addAction(UIAlertAction(title: "OK", style: .default))
+//                            self.present(alert, animated: true)
                         }
                     }
                 }
@@ -354,7 +356,6 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
             // No valid background found
             completion(["type": "none"])
         }
-        saveScrapbook()
     }
     
     private func uploadPhoto(image: UIImage, completion: @escaping (URL?) -> Void) {
@@ -385,7 +386,6 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
                 }
             }
         }
-        saveScrapbook()
     }
     
     private func clearExistingData(uid: String, completion: @escaping () -> Void) {
@@ -439,7 +439,6 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
             print("All previous data cleared. Ready to save new scrapbook!")
             completion()
         }
-        saveScarpbook()
     }
     
     @objc func returnButtonPressed() {
@@ -555,12 +554,15 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         applyFrame(to: imageView)
     }
     
-    func applyFrame(to imageView: ScrapbookImageView) {
+    func applyFrame(to imageView: ScrapbookImageView, skipSave: Bool = false) {
         guard let container = imageView.superview else { return }
 
         if let existingFrame = container.viewWithTag(1234) {
             existingFrame.removeFromSuperview()
             imageView.hasPolaroidFrame = false
+            if !skipSave {
+                saveScrapbook()
+            }
             return
         }
 
@@ -917,6 +919,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
                 for (_, view) in sortedViews {
                     self.contentPanel.addSubview(view)
                 }
+                self.actionStack.removeAll()
             }
         }
     }
@@ -937,7 +940,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
            let loadedImageView = lastContainer.subviews.first as? ScrapbookImageView {
             loadedImageView.firebaseURL = urlString
             if hasFrame {
-                self.applyFrame(to: loadedImageView)
+                self.applyFrame(to: loadedImageView, skipSave: true)
             }
             return lastContainer
         }
@@ -986,7 +989,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
                    let loadedImageView = lastContainer.subviews.first as? ScrapbookImageView {
                     loadedImageView.firebaseURL = urlString
                     if hasFrame {
-                        self.applyFrame(to: loadedImageView)
+                        self.applyFrame(to: loadedImageView, skipSave: true)
                     }
                 }
             }
@@ -1025,6 +1028,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
                 if let hexColor = data["value"] as? String, let color = UIColor(hexString: hexColor) {
                     DispatchQueue.main.async {
                         self.setBackgroundColor(color: color)
+                        self.actionStack.removeAll()
                     }
                 }
             case "image":
@@ -1036,6 +1040,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
                         }
                         DispatchQueue.main.async {
                             self.setBackgroundImage(image: image)
+                            self.actionStack.removeAll()
                         }
                     }.resume()
                 }
@@ -1286,6 +1291,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
                 contentPanel.backgroundColor = nil
             }
         }
+        saveScrapbook()
     }
 
     @objc private func goshiTapped(){
