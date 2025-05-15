@@ -43,7 +43,7 @@ class TryOnWebViewController: UIViewController, WKNavigationDelegate, WKUIDelega
         
         // Add save button
         let saveToScrapbookButton = UIButton(type: .system)
-        saveToScrapbookButton.setTitle("Save to ScrapBook \u{2605}", for: .normal)
+        saveToScrapbookButton.setTitle("Save to Try-On Room \u{2605}", for: .normal)
         saveToScrapbookButton.addTarget(self, action: #selector(saveToScrapbookTapped), for: .touchUpInside)
         saveToScrapbookButton.frame = CGRect(x: 0, y: 0, width: 170, height: 40)
         
