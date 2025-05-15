@@ -28,8 +28,8 @@
             filePath = "Goshsha Capstone/Preview Content/NewScrapbook.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "608"
-            endingLineNumber = "608"
+            startingLineNumber = "612"
+            endingLineNumber = "612"
             landmarkName = "applyFrame(to:skipSave:)"
             landmarkType = "7">
          </BreakpointContent>

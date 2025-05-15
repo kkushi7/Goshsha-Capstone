@@ -35,6 +35,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         setupUI()
         loadAllLayersInOrder()
         loadBackground()
+        actionStack.removeAll()
     }
 
     // MARK: - UI Setup
@@ -918,6 +919,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
                 for (_, view) in sortedViews {
                     self.contentPanel.addSubview(view)
                 }
+                self.actionStack.removeAll()
             }
         }
     }
@@ -1026,6 +1028,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
                 if let hexColor = data["value"] as? String, let color = UIColor(hexString: hexColor) {
                     DispatchQueue.main.async {
                         self.setBackgroundColor(color: color)
+                        self.actionStack.removeAll()
                     }
                 }
             case "image":
@@ -1037,6 +1040,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
                         }
                         DispatchQueue.main.async {
                             self.setBackgroundImage(image: image)
+                            self.actionStack.removeAll()
                         }
                     }.resume()
                 }
