@@ -1287,6 +1287,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
                 contentPanel.backgroundColor = nil
             }
         }
+        saveScrapbook()
     }
 
     @objc private func goshiTapped(){
