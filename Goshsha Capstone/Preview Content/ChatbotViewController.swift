@@ -43,8 +43,10 @@ class ChatbotViewController: UIViewController, UIImagePickerControllerDelegate, 
         goshiImageView = goshi
 
         helpBox = UIView()
-        helpBox?.backgroundColor = UIColor(white: 0.9, alpha: 1)
+        helpBox?.backgroundColor = UIColor(red: 1.0, green: 0.98, blue: 0.85, alpha: 1.0)
         helpBox?.layer.cornerRadius = 10
+        helpBox?.layer.borderWidth = 1
+        helpBox?.layer.borderColor = UIColor(red: 1.0, green: 0.9, blue: 0.5, alpha: 1).cgColor //light yellow
         helpBox?.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(helpBox!)
 
