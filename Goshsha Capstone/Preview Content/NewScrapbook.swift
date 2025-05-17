@@ -19,8 +19,14 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
     var chatButton: UIButton!
     private var dismissOverlay: UIView?
     private var actionStack: [EditorAction] = []
-
     let db = Firestore.firestore();
+    // MARK: - Tutorial UI References
+    var stickerButtonView: UIView?
+    var backgroundButtonView: UIView?
+    var imageButtonView: UIView?
+    var goshiButtonView: UIView?
+    var undoButtonView: UIButton?
+    private var tutorialManager: TutorialManager?
 
     enum EditorAction {
         case add(view: UIView)
@@ -36,6 +42,24 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         loadAllLayersInOrder()
         loadBackground()
         actionStack.removeAll()
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+
+        if !UserDefaults.standard.bool(forKey: "hasSeenTutorial") {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                let steps = [
+                    TutorialStep(title: "Customize with Stickers", description: "Enhance your virtual try-on room by adding stickers.", targetView: self.stickerButtonView!),
+                    TutorialStep(title: "Change Background", description: "Pick a background to match your look.", targetView: self.backgroundButtonView!),
+                    TutorialStep(title: "Add an Image", description: "Upload a picture to display inside the try on room.", targetView: self.imageButtonView!),
+                    TutorialStep(title: "Undo Your Last Action", description: "Undo to revert your most recent change.", targetView: self.undoButtonView!),
+                    TutorialStep(title: "Meet Goshi - Your Virtual Stylist", description: "Let them help find your shade and buy products saved in your try-on room.", targetView: self.goshiButtonView!)
+                ]
+                self.tutorialManager = TutorialManager(steps: steps)
+                self.tutorialManager?.start(in: self.view)
+            }
+        }
     }
 
     // MARK: - UI Setup
@@ -62,19 +86,11 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         // Undo Button
         let undoButton = setupButton(imageName: "undo", action: #selector(undoButtonTapped))
         titleContainer.addSubview(undoButton)
+        undoButtonView = undoButton
 
         // Content Panel
         contentPanel = createContentPanel()
         view.addSubview(contentPanel)
-
-//        // Chat Button
-//        chatButton = setupButton(imageName: "chatbotIcon", action: #selector(chatTapped))
-//        chatButton.layer.shadowColor = UIColor.black.cgColor
-//        chatButton.layer.shadowOpacity = 0.25
-//        chatButton.layer.shadowRadius = 8
-//        chatButton.layer.shadowOffset = CGSize(width: 0, height: 4)
-//        view.addSubview(chatButton)
-//        view.bringSubviewToFront(chatButton)
 
         // Toolbar
         let toolbar = createToolbar()
@@ -125,15 +141,27 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         toolbar.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
         toolbar.clipsToBounds = true
         
+        let sticker = createLabeledToolbarItem(imageName: "sticker", title: "STICKERS", action: #selector(stickerButton))
+        stickerButtonView = sticker.customView
+
+        let background = createLabeledToolbarItem(imageName: "bg", title: "BACKGROUND", action: #selector(openColorPicker))
+        backgroundButtonView = background.customView
+
+        let image = createLabeledToolbarItem(imageName: "image", title: "IMAGES", action: #selector(cameraTapped))
+        imageButtonView = image.customView
+
+        let goshi = createLabeledToolbarItem(imageName: "goshi", title: "GOSHI", action: #selector(goshiTapped))
+        goshiButtonView = goshi.customView
+
         toolbar.items = [
             .flexibleSpace(),
-            createLabeledToolbarItem(imageName: "sticker", title: "STICKERS", action: #selector(stickerButton)),
+            sticker,
             .flexibleSpace(),
-            createLabeledToolbarItem(imageName: "bg", title: "BACKGROUND", action: #selector(openColorPicker)),
+            background,
             .flexibleSpace(),
-            createLabeledToolbarItem(imageName: "image", title: "IMAGES", action: #selector(cameraTapped)),
+            image,
             .flexibleSpace(),
-            createLabeledToolbarItem(imageName: "goshi", title: "GOSHI", action: #selector(goshiTapped)),
+            goshi,
             .flexibleSpace(),
         ]
         
