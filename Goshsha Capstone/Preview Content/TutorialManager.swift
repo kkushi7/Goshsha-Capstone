@@ -5,9 +5,6 @@
 //  Created by Amber Chang on 5/16/25.
 //
 
-//  TutorialManager.swift
-//  Goshsha Capstone
-
 import UIKit
 
 struct TutorialStep {
@@ -22,14 +19,15 @@ class TutorialManager {
     private weak var parentView: UIView?
     private var overlay: UIView?
     private var bubbleView: UIView?
+    private let tutorialKey: String
 
-    init(steps: [TutorialStep]) {
+    init(steps: [TutorialStep], tutorialKey: String) {
         self.steps = steps
+        self.tutorialKey = tutorialKey
     }
 
     func start(in parentView: UIView) {
-        guard !UserDefaults.standard.bool(forKey: "hasSeenTutorial") else { return }
-
+        guard !UserDefaults.standard.bool(forKey: tutorialKey) else { return }
         self.parentView = parentView
         showStep()
     }
@@ -149,6 +147,6 @@ class TutorialManager {
     private func cleanup() {
         overlay?.removeFromSuperview()
         bubbleView?.removeFromSuperview()
-        UserDefaults.standard.set(true, forKey: "hasSeenTutorial")
+        UserDefaults.standard.set(true, forKey: tutorialKey)
     }
 }
