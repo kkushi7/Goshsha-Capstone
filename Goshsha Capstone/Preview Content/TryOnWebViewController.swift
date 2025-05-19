@@ -22,6 +22,7 @@ class TryOnWebViewController: UIViewController, WKNavigationDelegate, WKUIDelega
     var doneButton: UIBarButtonItem!
     var saveButton: UIBarButtonItem!
     var scrapbookButton: UIBarButtonItem!
+    var tutorialManager: TutorialManager?
     let saveToScrapbookButton = UIButton(type: .system)
     
     let db = Firestore.firestore();
@@ -127,6 +128,21 @@ class TryOnWebViewController: UIViewController, WKNavigationDelegate, WKUIDelega
         // Load the URL
         if let url = URL(string: "https://goshha.com") {
             webView.load(URLRequest(url: url))
+        }
+    }
+
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+
+        if !UserDefaults.standard.bool(forKey: "hasSeenTutorial") {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                let steps = [
+                    TutorialStep(title: "Save to Try-On Room", description: "Save screenshots of try-ons and products to the Try-on room.", targetView: self.saveToScrapbookButton)
+                ]
+                self.tutorialManager = TutorialManager(steps: steps)
+                self.tutorialManager?.start(in: self.view)
+            }
         }
     }
     
