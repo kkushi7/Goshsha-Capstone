@@ -26,6 +26,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
     var imageButtonView: UIView?
     var goshiButtonView: UIView?
     var undoButtonView: UIButton?
+    var isLoadingFromDatabase = false
     private var tutorialManager: TutorialManager?
 
     enum EditorAction {
@@ -39,9 +40,25 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
-        loadAllLayersInOrder()
-        loadBackground()
+        isLoadingFromDatabase = true
+
+        let loadGroup = DispatchGroup()
+
+        loadGroup.enter()
+        loadAllLayersInOrder {
+            loadGroup.leave()
+        }
+
+        loadGroup.enter()
+        loadBackground {
+            loadGroup.leave()
+        }
+
         actionStack.removeAll()
+
+        loadGroup.notify(queue: .main) {
+            self.isLoadingFromDatabase = false
+        }
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -571,7 +588,9 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handleImagePan(_:)))
         container.addGestureRecognizer(panGesture)
         
-        saveScrapbook()
+        if !isLoadingFromDatabase {
+            saveScrapbook()
+        }
     }
     
     @objc private func applyFrame(_ sender: UIButton) {
@@ -588,7 +607,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         if let existingFrame = container.viewWithTag(1234) {
             existingFrame.removeFromSuperview()
             imageView.hasPolaroidFrame = false
-            if !skipSave {
+            if !skipSave && !isLoadingFromDatabase {
                 saveScrapbook()
             }
             return
@@ -638,7 +657,9 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
 
         imageView.hasPolaroidFrame = true
 
-        saveScrapbook()
+        if !isLoadingFromDatabase {
+            saveScrapbook()
+        }
     }
     
     @objc private func showDeleteButton(_ gesture: UILongPressGestureRecognizer) {
@@ -859,7 +880,9 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleStickerTap(_:)))
         container.addGestureRecognizer(tapGesture)
 
-        saveScrapbook()
+        if !isLoadingFromDatabase {
+            saveScrapbook()
+        }
     }
     
     @objc private func handleStickerTap(_ gesture: UITapGestureRecognizer) {
@@ -868,7 +891,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         }
     }
     
-    private func loadAllLayersInOrder() {
+    private func loadAllLayersInOrder(completion: @escaping () -> Void) {
         guard let uid = Auth.auth().currentUser?.uid else {
             print("User not logged in.")
             return
@@ -948,6 +971,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
                     self.contentPanel.addSubview(view)
                 }
                 self.actionStack.removeAll()
+                completion()
             }
         }
     }
@@ -1024,32 +1048,26 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         }.resume()
     }
     
-    private func loadBackground() {
+    private func loadBackground(completion: @escaping () -> Void) {
         guard let uid = Auth.auth().currentUser?.uid else {
-            print("User not logged in.")
+            completion()
             return
         }
 
         db.collection("users").document(uid).getDocument { (document, error) in
-            if let error = error {
-                print("Error getting document: \(error)")
+            guard let document = document, document.exists,
+                  let scrapbooks = document.data()?["scrapbooks"] as? [String: Any],
+                  let backgroundData = scrapbooks["background"] as? [String: Any] else {
+                print("No background data found.")
+                completion()
                 return
             }
 
-            if let document = document, document.exists {
-                if let scrapbooks = document.data()?["scrapbooks"] as? [String: Any],
-                   let backgroundData = scrapbooks["background"] as? [String: Any] {
-                    self.loadBackground(from: backgroundData)
-                } else {
-                    print("No background data found.")
-                }
-            } else {
-                print("Document does not exist")
-            }
+            self.loadBackground(from: backgroundData, completion: completion)
         }
     }
 
-    private func loadBackground(from data: [String: Any]) {
+    private func loadBackground(from data: [String: Any], completion: @escaping () -> Void) {
         if let type = data["type"] as? String {
             switch type {
             case "color":
@@ -1057,24 +1075,33 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
                     DispatchQueue.main.async {
                         self.setBackgroundColor(color: color)
                         self.actionStack.removeAll()
+                        completion()
                     }
+                } else {
+                    completion()
                 }
             case "image":
                 if let urlString = data["url"] as? String, let url = URL(string: urlString) {
                     URLSession.shared.dataTask(with: url) { data, _, error in
                         guard let data = data, let image = UIImage(data: data), error == nil else {
-                            print("Failed to load background image from URL: \(url)")
+                            completion()
                             return
                         }
                         DispatchQueue.main.async {
                             self.setBackgroundImage(image: image)
                             self.actionStack.removeAll()
+                            completion()
                         }
                     }.resume()
+                } else {
+                    completion()
                 }
             default:
                 print("Unknown background type: \(type)")
+                completion()
             }
+        } else {
+            completion()
         }
     }
 
@@ -1169,7 +1196,9 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         panel.layer.sublayers?.removeAll(where: { $0 is CAGradientLayer })
         panel.backgroundColor = color
 
-        saveScrapbook()
+        if !isLoadingFromDatabase {
+            saveScrapbook()
+        }
     }
 
     @objc private func openColorPicker(){
@@ -1224,6 +1253,9 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         guard let container = sender.superview else { return }
         actionStack.append(.delete(view: container, fromSuperview: contentPanel))
         container.removeFromSuperview()
+        if !isLoadingFromDatabase {
+            saveScrapbook()
+        }
     }
 
     // MARK: - Gesture Handling

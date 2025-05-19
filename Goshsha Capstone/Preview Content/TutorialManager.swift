@@ -5,9 +5,6 @@
 //  Created by Amber Chang on 5/16/25.
 //
 
-//  TutorialManager.swift
-//  Goshsha Capstone
-
 import UIKit
 
 struct TutorialStep {
