@@ -64,16 +64,39 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
 
-        if !UserDefaults.standard.bool(forKey: "hasSeenTutorial") {
+        guard let uid = Auth.auth().currentUser?.uid else {
+            print("No logged-in user.")
+            return
+        }
+
+        let tutorialKey = "hasSeenTutorial_\(uid)"
+
+        if !UserDefaults.standard.bool(forKey: tutorialKey) {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 let steps = [
-                    TutorialStep(title: "Customize with Stickers", description: "Enhance your virtual try-on room by adding stickers.", targetView: self.stickerButtonView!),
-                    TutorialStep(title: "Change Background", description: "Pick a background to match your look.", targetView: self.backgroundButtonView!),
-                    TutorialStep(title: "Add an Image", description: "Upload a picture to display inside the try on room.", targetView: self.imageButtonView!),
-                    TutorialStep(title: "Undo Your Last Action", description: "Undo to revert your most recent change.", targetView: self.undoButtonView!),
-                    TutorialStep(title: "Meet Goshi - Your Virtual Stylist", description: "Let them help find your shade and buy products saved in your try-on room.", targetView: self.goshiButtonView!)
+                    TutorialStep(
+                        title: "Customize with Stickers",
+                        description: "Enhance your virtual try-on room by adding stickers.",
+                        targetView: self.stickerButtonView!),
+                    TutorialStep(
+                        title: "Change Background",
+                        description: "Pick a background to match your look.",
+                        targetView: self.backgroundButtonView!),
+                    TutorialStep(
+                        title: "Add an Image",
+                        description: "Upload a picture to display inside the try on room.",
+                        targetView: self.imageButtonView!),
+                    TutorialStep(
+                        title: "Undo Your Last Action",
+                        description: "Undo to revert your most recent change.",
+                        targetView: self.undoButtonView!),
+                    TutorialStep(
+                        title: "Meet Goshi - Your Virtual Stylist",
+                        description: "Let them help find your shade and buy products saved in your try-on room.",
+                        targetView: self.goshiButtonView!)
                 ]
-                self.tutorialManager = TutorialManager(steps: steps, tutorialKey: "hasSeenTutorial")
+
+                self.tutorialManager = TutorialManager(steps: steps, tutorialKey: tutorialKey)
                 self.tutorialManager?.start(in: self.view)
             }
         }
