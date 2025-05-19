@@ -73,7 +73,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
                     TutorialStep(title: "Undo Your Last Action", description: "Undo to revert your most recent change.", targetView: self.undoButtonView!),
                     TutorialStep(title: "Meet Goshi - Your Virtual Stylist", description: "Let them help find your shade and buy products saved in your try-on room.", targetView: self.goshiButtonView!)
                 ]
-                self.tutorialManager = TutorialManager(steps: steps)
+                self.tutorialManager = TutorialManager(steps: steps, tutorialKey: "hasSeenTutorial")
                 self.tutorialManager?.start(in: self.view)
             }
         }

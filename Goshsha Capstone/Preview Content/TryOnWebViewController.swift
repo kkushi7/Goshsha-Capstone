@@ -135,12 +135,12 @@ class TryOnWebViewController: UIViewController, WKNavigationDelegate, WKUIDelega
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
 
-        if !UserDefaults.standard.bool(forKey: "hasSeenTutorial") {
+        if !UserDefaults.standard.bool(forKey: "hasSeenTryonTutorial") {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 let steps = [
                     TutorialStep(title: "Save to Try-On Room", description: "Save screenshots of try-ons and products to the Try-on room.", targetView: self.saveToScrapbookButton)
                 ]
-                self.tutorialManager = TutorialManager(steps: steps)
+                self.tutorialManager = TutorialManager(steps: steps, tutorialKey: "hasSeenTryonTutorial")
                 self.tutorialManager?.start(in: self.view)
             }
         }
