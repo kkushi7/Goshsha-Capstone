@@ -22,6 +22,7 @@ class TryOnWebViewController: UIViewController, WKNavigationDelegate, WKUIDelega
     var doneButton: UIBarButtonItem!
     var saveButton: UIBarButtonItem!
     var scrapbookButton: UIBarButtonItem!
+    let saveToScrapbookButton = UIButton(type: .system)
     
     let db = Firestore.firestore();
     
@@ -42,7 +43,6 @@ class TryOnWebViewController: UIViewController, WKNavigationDelegate, WKUIDelega
         let titleView = UIView(frame: CGRect(x: 0, y: 0, width: 170, height: 40))
         
         // Add save button
-        let saveToScrapbookButton = UIButton(type: .system)
         saveToScrapbookButton.setTitle("Save to Try-On Room \u{2605}", for: .normal)
         saveToScrapbookButton.addTarget(self, action: #selector(saveToScrapbookTapped), for: .touchUpInside)
         saveToScrapbookButton.frame = CGRect(x: 0, y: 0, width: 170, height: 40)
