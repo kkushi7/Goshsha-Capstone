@@ -10,7 +10,7 @@ import UIKit
 struct TutorialStep {
     let title: String
     let description: String
-    let targetView: UIView
+    let targetView: UIView?
 }
 
 class TutorialManager {
@@ -39,7 +39,7 @@ class TutorialManager {
         }
 
         let step = steps[currentIndex]
-        let targetFrame = step.targetView.convert(step.targetView.bounds, to: parentView)
+        let targetFrame = step.targetView?.convert(step.targetView!.bounds, to: parentView)
 
         // Overlay
         let overlayView = UIView(frame: parentView.bounds)
@@ -47,14 +47,6 @@ class TutorialManager {
         overlayView.isUserInteractionEnabled = true
         parentView.addSubview(overlayView)
         overlay = overlayView
-
-        // Highlighted target
-        let spotlight = UIView(frame: targetFrame)
-        spotlight.layer.cornerRadius = 12
-        spotlight.layer.borderColor = UIColor.white.cgColor
-        spotlight.layer.borderWidth = 2
-        spotlight.backgroundColor = .clear
-        overlayView.addSubview(spotlight)
 
         // Bubble
         let bubble = UIView()
@@ -103,19 +95,37 @@ class TutorialManager {
         button.addTarget(self, action: #selector(nextTapped), for: .touchUpInside)
         bubble.addSubview(button)
 
-        // Position bubble smartly
-        let isTargetNearTop = targetFrame.minY < 200
-        if isTargetNearTop {
-            NSLayoutConstraint.activate([
-                bubble.topAnchor.constraint(equalTo: spotlight.bottomAnchor, constant: 16),
-                bubble.leadingAnchor.constraint(equalTo: parentView.leadingAnchor, constant: 24),
-                bubble.trailingAnchor.constraint(equalTo: parentView.trailingAnchor, constant: -24)
-            ])
+        if let frame = targetFrame {
+            // Highlighted target
+            let spotlight = UIView(frame: frame)
+            spotlight.layer.cornerRadius = 12
+            spotlight.layer.borderColor = UIColor.white.cgColor
+            spotlight.layer.borderWidth = 2
+            spotlight.backgroundColor = .clear
+            overlayView.addSubview(spotlight)
+
+            // Position bubble smartly
+            let isTargetNearTop = frame.minY < 200
+            if isTargetNearTop {
+                NSLayoutConstraint.activate([
+                    bubble.topAnchor.constraint(equalTo: spotlight.bottomAnchor, constant: 16),
+                    bubble.leadingAnchor.constraint(equalTo: parentView.leadingAnchor, constant: 24),
+                    bubble.trailingAnchor.constraint(equalTo: parentView.trailingAnchor, constant: -24)
+                ])
+            } else {
+                NSLayoutConstraint.activate([
+                    bubble.bottomAnchor.constraint(equalTo: spotlight.topAnchor, constant: -16),
+                    bubble.leadingAnchor.constraint(equalTo: parentView.leadingAnchor, constant: 24),
+                    bubble.trailingAnchor.constraint(equalTo: parentView.trailingAnchor, constant: -24)
+                ])
+            }
         } else {
+            // Center bubble if no targetView
             NSLayoutConstraint.activate([
-                bubble.bottomAnchor.constraint(equalTo: spotlight.topAnchor, constant: -16),
-                bubble.leadingAnchor.constraint(equalTo: parentView.leadingAnchor, constant: 24),
-                bubble.trailingAnchor.constraint(equalTo: parentView.trailingAnchor, constant: -24)
+                bubble.centerXAnchor.constraint(equalTo: parentView.centerXAnchor),
+                bubble.centerYAnchor.constraint(equalTo: parentView.centerYAnchor),
+                bubble.leadingAnchor.constraint(greaterThanOrEqualTo: parentView.leadingAnchor, constant: 24),
+                bubble.trailingAnchor.constraint(lessThanOrEqualTo: parentView.trailingAnchor, constant: -24)
             ])
         }
 

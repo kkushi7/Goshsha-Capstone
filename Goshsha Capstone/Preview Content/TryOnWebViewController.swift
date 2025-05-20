@@ -146,6 +146,10 @@ class TryOnWebViewController: UIViewController, WKNavigationDelegate, WKUIDelega
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 let steps = [
                     TutorialStep(
+                        title: "Explore Brands, Try On Products",
+                        description: "Scroll through our list of brands to find ones that offer virtual try-on. Try on lipsticks, or foundations — right from their site",
+                        targetView: nil),
+                    TutorialStep(
                         title: "Save to Try-On Room",
                         description: "Save screenshots of try-ons and products to the Try-on room.",
                         targetView: self.saveToScrapbookButton
