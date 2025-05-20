@@ -530,7 +530,10 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
     }
     
     @objc func returnButtonPressed() {
-        dismiss(animated: true, completion: nil)
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let rootVC = windowScene.windows.first?.rootViewController {
+            rootVC.dismiss(animated: true, completion: nil)
+        }
     }
 
     @objc private func selectImageFromLibrary() {
