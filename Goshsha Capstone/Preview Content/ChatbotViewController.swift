@@ -7,6 +7,8 @@
 
 import UIKit
 import FirebaseStorage
+import FirebaseAuth
+import FirebaseFirestore
 
 class ChatbotViewController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     
@@ -229,17 +231,79 @@ class ChatbotViewController: UIViewController, UIImagePickerControllerDelegate, 
         updateHelpBox(with: "Shore-ly! I can do that for you", fontSize: 30)
         findMatch = true
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            self.setHelpBoxPositionToCenter()
-            self.updateHelpBox(
-                with: "We need a photo of your face to find your perfect shade.\nPlease make sure you’re not wearing any makeup products, and are in a well-lit space.",
-                fontSize: 18,
-                buttons: [
-                    ("Take Picture", #selector(self.takeBareFacePicture)),
-                    ("Cancel", #selector(self.cancelBareFaceFlow))
-                ]
-            )
+        // Check product image count first
+        checkProductImageCount { hasEnough in
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                if hasEnough {
+                    // Proceed with tutorial flow
+                    self.setHelpBoxPositionToCenter()
+                    self.updateHelpBox(
+                        with: "We need a photo of your face to find your perfect shade.\nPlease make sure you’re not wearing any makeup products, and are in a well-lit space.",
+                        fontSize: 18,
+                        buttons: [
+                            ("Take Picture", #selector(self.takeBareFacePicture)),
+                            ("Cancel", #selector(self.cancelBareFaceFlow))
+                        ]
+                    )
+                } else {
+                    self.setHelpBoxPositionToCenter()
+                    self.goshiImageView?.image = UIImage(named: "goshi_thinking")
+                    self.updateHelpBox(
+                        with: "No Products to Analyze\n\nYou don’t have enough pictures of products in your Try-On Room yet. Add at least two product images to compare shades and find your match.",
+                        fontSize: 17,
+                        buttons: [
+                            ("Go to Try-On Page", #selector(self.redirectToTryOnPage)),
+                            ("Cancel", #selector(self.cancelBareFaceFlow))
+                        ]
+                    )
+                }
+            }
         }
+    }
+    
+    private func checkProductImageCount(completion: @escaping (Bool) -> Void) {
+        guard let uid = Auth.auth().currentUser?.uid else {
+            completion(false)
+            return
+        }
+
+        let db = Firestore.firestore()
+        let userDocRef = db.collection("users").document(uid)
+
+        userDocRef.getDocument { snapshot, error in
+            if let error = error {
+                print("Error fetching user data:", error)
+                completion(false)
+                return
+            }
+
+            guard let data = snapshot?.data(),
+                  let scrapbook = data["scrapbooks"] as? [String: Any],
+                  let photos = scrapbook["photos"] as? [[String: Any]] else {
+                completion(false)
+                return
+            }
+
+            completion(photos.count >= 2)
+        }
+    }
+    
+    @objc private func redirectToTryOnPage() {
+        self.presentingViewController?.dismiss(animated: true, completion: {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                let storyboard = UIStoryboard(name: "Main", bundle: nil)
+                if let tryonController = storyboard.instantiateViewController(withIdentifier: "TryOnWebViewController") as? TryOnWebViewController {
+                    let navController = UINavigationController(rootViewController: tryonController)
+                    navController.modalPresentationStyle = .fullScreen
+                    
+                    if let topVC = UIApplication.getTopViewController() {
+                        topVC.present(navController, animated: true, completion: nil)
+                    } else {
+                        print("Could not find a valid top view controller to present from.")
+                    }
+                }
+            }
+        })
     }
     
     @objc private func takeBareFacePicture() {
@@ -477,11 +541,16 @@ class ChatbotViewController: UIViewController, UIImagePickerControllerDelegate, 
         for (title, action) in buttons {
             let button = UIButton(type: .system)
             button.setTitle(title, for: .normal)
-            button.setTitleColor(.black, for: .normal)
             button.layer.cornerRadius = 10
-            button.backgroundColor = .white
             button.translatesAutoresizingMaskIntoConstraints = false
             button.addTarget(self, action: action, for: .touchUpInside)
+            if title == "Go to Try-On Page" || title == "Take Picture" {
+                button.setTitleColor(.white, for: .normal)
+                button.backgroundColor = .systemBlue
+            } else {
+                button.setTitleColor(.black, for: .normal)
+                button.backgroundColor = .white
+            }
             helpBox?.addSubview(button)
             
             constraints.append(contentsOf: [
@@ -506,5 +575,24 @@ class ChatbotViewController: UIViewController, UIImagePickerControllerDelegate, 
         }
 
         NSLayoutConstraint.activate(constraints)
+    }
+}
+
+extension UIApplication {
+    static func getTopViewController(base: UIViewController? =
+        UIApplication.shared.connectedScenes
+            .compactMap { ($0 as? UIWindowScene)?.keyWindow }
+            .first?.rootViewController) -> UIViewController? {
+        
+        if let nav = base as? UINavigationController {
+            return getTopViewController(base: nav.visibleViewController)
+        }
+        if let tab = base as? UITabBarController {
+            return getTopViewController(base: tab.selectedViewController)
+        }
+        if let presented = base?.presentedViewController {
+            return getTopViewController(base: presented)
+        }
+        return base
     }
 }

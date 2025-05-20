@@ -59,6 +59,26 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         loadGroup.notify(queue: .main) {
             self.isLoadingFromDatabase = false
         }
+        NotificationCenter.default.addObserver(self, selector: #selector(reloadScrapbookData), name: Notification.Name("ReloadScrapbookData"), object: nil)
+    }
+    
+    @objc private func reloadScrapbookData() {
+        isLoadingFromDatabase = true
+
+        let group = DispatchGroup()
+        group.enter()
+        loadAllLayersInOrder {
+            group.leave()
+        }
+
+        group.enter()
+        loadBackground {
+            group.leave()
+        }
+
+        group.notify(queue: .main) {
+            self.isLoadingFromDatabase = false
+        }
     }
     
     override func viewDidAppear(_ animated: Bool) {

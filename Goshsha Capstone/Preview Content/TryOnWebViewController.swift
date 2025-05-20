@@ -273,6 +273,7 @@ class TryOnWebViewController: UIViewController, WKNavigationDelegate, WKUIDelega
     
     @objc func doneButtonTapped() {
         // Dismiss the web view controller and go back to the previous screen
+        NotificationCenter.default.post(name: Notification.Name("ReloadScrapbookData"), object: nil)
         self.dismiss(animated: true, completion: nil)
     }
     
