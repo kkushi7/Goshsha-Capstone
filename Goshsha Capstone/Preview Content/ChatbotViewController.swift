@@ -12,63 +12,76 @@ import FirebaseFirestore
 
 class ChatbotViewController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     
-    var helpBox: UIView?
-    var findMatch: Bool = false
-    var buyProduct: Bool = false
-    private var baseHexColor: String?
-    private var selectedMatchView: ScrapbookImageView?
+    // MARK: - UI Components
+    private var helpBox: UIView?
+    private var goshiImageView: UIImageView?
+
+    // MARK: - State Flags
+    private var findMatch = false
+    private var buyProduct = false
+    private var isShowingFinalProduct = false
+
+    // MARK: - Constraints
     private var helpBoxBottomConstraint: NSLayoutConstraint?
     private var helpBoxTrailingConstraint: NSLayoutConstraint?
     private var goshiBottomConstraint: NSLayoutConstraint?
     private var goshiTrailingConstraint: NSLayoutConstraint?
-    private var goshiImageView: UIImageView?
-    private var isShowingFinalProduct = false
 
+    // MARK: - Data
+    private var baseHexColor: String?
+    private var selectedMatchView: ScrapbookImageView?
+
+    // MARK: - Setup
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
     }
     
+    // MARK: - UI Setup
     private func setupUI() {
+        setupBackground()
+        setupGestureRecognizer()
+        setupGoshiImage()
+        setupHelpBox()
+        updateHelpBox(with: "Hi! What can I help you with?", fontSize: 18, buttons: [
+            ("Find my match", #selector(findMatchTapped)),
+            ("Buy a product", #selector(buyProductTapped))
+        ])
+        setHelpBoxPositionToCorner()
+    }
+    
+    private func setupBackground() {
         let blurEffectView = UIVisualEffectView(effect: UIBlurEffect(style: .extraLight))
         blurEffectView.frame = view.bounds
         blurEffectView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         view.addSubview(blurEffectView)
+    }
 
+    private func setupGestureRecognizer() {
         view.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(dismissChatbot)))
-
+    }
+    
+    private func setupGoshiImage() {
         let goshi = UIImageView(image: UIImage(named: "goshi"))
         goshi.translatesAutoresizingMaskIntoConstraints = false
         goshi.contentMode = .scaleAspectFit
-
         view.addSubview(goshi)
         goshiImageView = goshi
+    }
 
+    private func setupHelpBox() {
         helpBox = UIView()
         helpBox?.backgroundColor = UIColor(red: 1.0, green: 0.98, blue: 0.85, alpha: 1.0)
         helpBox?.layer.cornerRadius = 10
         helpBox?.layer.borderWidth = 1
-        helpBox?.layer.borderColor = UIColor(red: 1.0, green: 0.9, blue: 0.5, alpha: 1).cgColor //light yellow
+        helpBox?.layer.borderColor = UIColor(red: 1.0, green: 0.9, blue: 0.5, alpha: 1).cgColor
         helpBox?.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(helpBox!)
-
-        updateHelpBox(
-            with: "Hi! What can I help you with?",
-            fontSize: 18,
-            buttons: [
-                ("Find my match", #selector(findMatchTapped)),
-                ("Buy a product", #selector(buyProductTapped))
-            ]
-        )
-
-        setHelpBoxPositionToCorner()
     }
     
+    // MARK: - Help Box Positioning
     private func setHelpBoxPositionToCorner() {
-        helpBoxBottomConstraint?.isActive = false
-        helpBoxTrailingConstraint?.isActive = false
-        goshiBottomConstraint?.isActive = false
-        goshiTrailingConstraint?.isActive = false
+        deactivateHelpConstraints()
 
         helpBoxBottomConstraint = helpBox!.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -50)
         helpBoxTrailingConstraint = helpBox!.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -20)
@@ -76,21 +89,16 @@ class ChatbotViewController: UIViewController, UIImagePickerControllerDelegate, 
         goshiTrailingConstraint = goshiImageView!.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -20)
 
         NSLayoutConstraint.activate([
-            helpBoxBottomConstraint!,
-            helpBoxTrailingConstraint!,
+            helpBoxBottomConstraint!, helpBoxTrailingConstraint!,
             helpBox!.widthAnchor.constraint(equalToConstant: 300),
-            goshiBottomConstraint!,
-            goshiTrailingConstraint!,
+            goshiBottomConstraint!, goshiTrailingConstraint!,
             goshiImageView!.widthAnchor.constraint(equalToConstant: 300),
-            goshiImageView!.heightAnchor.constraint(equalToConstant: 200),
+            goshiImageView!.heightAnchor.constraint(equalToConstant: 200)
         ])
     }
     
     private func setHelpBoxPositionToCenter() {
-        helpBoxBottomConstraint?.isActive = false
-        helpBoxTrailingConstraint?.isActive = false
-        goshiBottomConstraint?.isActive = false
-        goshiTrailingConstraint?.isActive = false
+        deactivateHelpConstraints()
 
         helpBoxBottomConstraint = helpBox!.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: 120)
         helpBoxTrailingConstraint = helpBox!.centerXAnchor.constraint(equalTo: view.centerXAnchor)
@@ -98,15 +106,17 @@ class ChatbotViewController: UIViewController, UIImagePickerControllerDelegate, 
         goshiTrailingConstraint = goshiImageView!.centerXAnchor.constraint(equalTo: view.centerXAnchor)
 
         NSLayoutConstraint.activate([
-            helpBoxBottomConstraint!,
-            helpBoxTrailingConstraint!,
-            goshiBottomConstraint!,
-            goshiTrailingConstraint!
+            helpBoxBottomConstraint!, helpBoxTrailingConstraint!,
+            goshiBottomConstraint!, goshiTrailingConstraint!
         ])
 
         UIView.animate(withDuration: 0.4) {
             self.view.layoutIfNeeded()
         }
+    }
+    
+    private func deactivateHelpConstraints() {
+        [helpBoxBottomConstraint, helpBoxTrailingConstraint, goshiBottomConstraint, goshiTrailingConstraint].forEach { $0?.isActive = false }
     }
     
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {

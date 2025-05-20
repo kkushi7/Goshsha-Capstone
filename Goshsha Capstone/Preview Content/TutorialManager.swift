@@ -17,8 +17,8 @@ class TutorialManager {
     private var steps: [TutorialStep]
     private var currentIndex = 0
     private weak var parentView: UIView?
-    private var overlay: UIView?
-    private var bubbleView: UIView?
+    private var currentOverlay: UIView?
+    private var currentBubble: UIView?
     private let tutorialKey: String
 
     init(steps: [TutorialStep], tutorialKey: String) {
@@ -46,9 +46,27 @@ class TutorialManager {
         overlayView.backgroundColor = UIColor.black.withAlphaComponent(0.5)
         overlayView.isUserInteractionEnabled = true
         parentView.addSubview(overlayView)
-        overlay = overlayView
+        currentOverlay = overlayView
 
         // Bubble
+        let bubble = createBubble(for: step)
+        overlayView.addSubview(bubble)
+        currentBubble = bubble
+
+        if let frame = targetFrame {
+            let spotlight = UIView(frame: frame)
+            spotlight.layer.cornerRadius = 12
+            spotlight.layer.borderColor = UIColor.white.cgColor
+            spotlight.layer.borderWidth = 2
+            spotlight.backgroundColor = .clear
+            overlayView.addSubview(spotlight)
+            positionBubble(over: frame)
+        } else {
+            centerBubble()
+        }
+    }
+
+    private func createBubble(for step: TutorialStep) -> UIView {
         let bubble = UIView()
         bubble.backgroundColor = UIColor(red: 1, green: 0.937, blue: 0.702, alpha: 1) // #FFEFB3
         bubble.layer.cornerRadius = 20
@@ -60,10 +78,8 @@ class TutorialManager {
         bubble.layer.shadowRadius = 6
         bubble.translatesAutoresizingMaskIntoConstraints = false
         bubble.isUserInteractionEnabled = true
-        overlayView.addSubview(bubble)
-        bubbleView = bubble
 
-        // Title Label
+        // Title
         let titleLabel = UILabel()
         titleLabel.text = step.title
         titleLabel.numberOfLines = 0
@@ -72,7 +88,7 @@ class TutorialManager {
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         bubble.addSubview(titleLabel)
 
-        // Description Label
+        // Description
         let descLabel = UILabel()
         descLabel.text = step.description
         descLabel.numberOfLines = 0
@@ -95,41 +111,6 @@ class TutorialManager {
         button.addTarget(self, action: #selector(nextTapped), for: .touchUpInside)
         bubble.addSubview(button)
 
-        if let frame = targetFrame {
-            // Highlighted target
-            let spotlight = UIView(frame: frame)
-            spotlight.layer.cornerRadius = 12
-            spotlight.layer.borderColor = UIColor.white.cgColor
-            spotlight.layer.borderWidth = 2
-            spotlight.backgroundColor = .clear
-            overlayView.addSubview(spotlight)
-
-            // Position bubble smartly
-            let isTargetNearTop = frame.minY < 200
-            if isTargetNearTop {
-                NSLayoutConstraint.activate([
-                    bubble.topAnchor.constraint(equalTo: spotlight.bottomAnchor, constant: 16),
-                    bubble.leadingAnchor.constraint(equalTo: parentView.leadingAnchor, constant: 24),
-                    bubble.trailingAnchor.constraint(equalTo: parentView.trailingAnchor, constant: -24)
-                ])
-            } else {
-                NSLayoutConstraint.activate([
-                    bubble.bottomAnchor.constraint(equalTo: spotlight.topAnchor, constant: -16),
-                    bubble.leadingAnchor.constraint(equalTo: parentView.leadingAnchor, constant: 24),
-                    bubble.trailingAnchor.constraint(equalTo: parentView.trailingAnchor, constant: -24)
-                ])
-            }
-        } else {
-            // Center bubble if no targetView
-            NSLayoutConstraint.activate([
-                bubble.centerXAnchor.constraint(equalTo: parentView.centerXAnchor),
-                bubble.centerYAnchor.constraint(equalTo: parentView.centerYAnchor),
-                bubble.leadingAnchor.constraint(greaterThanOrEqualTo: parentView.leadingAnchor, constant: 24),
-                bubble.trailingAnchor.constraint(lessThanOrEqualTo: parentView.trailingAnchor, constant: -24)
-            ])
-        }
-
-        // Inner layout
         NSLayoutConstraint.activate([
             titleLabel.topAnchor.constraint(equalTo: bubble.topAnchor, constant: 24),
             titleLabel.leadingAnchor.constraint(equalTo: bubble.leadingAnchor, constant: 16),
@@ -143,20 +124,52 @@ class TutorialManager {
             button.bottomAnchor.constraint(equalTo: bubble.bottomAnchor, constant: -24),
             button.centerXAnchor.constraint(equalTo: bubble.centerXAnchor)
         ])
+
+        return bubble
+    }
+
+    private func positionBubble(over targetFrame: CGRect) {
+        guard let parent = parentView, let bubble = currentBubble else { return }
+        let isTargetNearTop = targetFrame.minY < 200
+
+        if isTargetNearTop {
+            NSLayoutConstraint.activate([
+                bubble.topAnchor.constraint(equalTo: parent.topAnchor, constant: targetFrame.maxY + 16),
+                bubble.leadingAnchor.constraint(equalTo: parent.leadingAnchor, constant: 24),
+                bubble.trailingAnchor.constraint(equalTo: parent.trailingAnchor, constant: -24)
+            ])
+        } else {
+            NSLayoutConstraint.activate([
+                bubble.bottomAnchor.constraint(equalTo: parent.topAnchor, constant: targetFrame.minY - 16),
+                bubble.leadingAnchor.constraint(equalTo: parent.leadingAnchor, constant: 24),
+                bubble.trailingAnchor.constraint(equalTo: parent.trailingAnchor, constant: -24)
+            ])
+        }
+    }
+
+    private func centerBubble() {
+        guard let parent = parentView, let bubble = currentBubble else { return }
+
+        NSLayoutConstraint.activate([
+            bubble.centerXAnchor.constraint(equalTo: parent.centerXAnchor),
+            bubble.centerYAnchor.constraint(equalTo: parent.centerYAnchor),
+            bubble.leadingAnchor.constraint(greaterThanOrEqualTo: parent.leadingAnchor, constant: 24),
+            bubble.trailingAnchor.constraint(lessThanOrEqualTo: parent.trailingAnchor, constant: -24)
+        ])
     }
 
     @objc private func nextTapped() {
-        bubbleView?.removeFromSuperview()
-        overlay?.removeFromSuperview()
-        bubbleView = nil
-        overlay = nil
+        currentBubble?.removeFromSuperview()
+        currentOverlay?.removeFromSuperview()
+        currentBubble = nil
+        currentOverlay = nil
         currentIndex += 1
         showStep()
     }
 
     private func cleanup() {
-        overlay?.removeFromSuperview()
-        bubbleView?.removeFromSuperview()
+        currentOverlay?.removeFromSuperview()
+        currentBubble?.removeFromSuperview()
         UserDefaults.standard.set(true, forKey: tutorialKey)
     }
 }
