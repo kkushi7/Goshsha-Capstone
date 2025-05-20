@@ -7,66 +7,81 @@
 
 import UIKit
 import FirebaseStorage
+import FirebaseAuth
+import FirebaseFirestore
 
 class ChatbotViewController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     
-    var helpBox: UIView?
-    var findMatch: Bool = false
-    var buyProduct: Bool = false
-    private var baseHexColor: String?
-    private var selectedMatchView: ScrapbookImageView?
+    // MARK: - UI Components
+    private var helpBox: UIView?
+    private var goshiImageView: UIImageView?
+
+    // MARK: - State Flags
+    private var findMatch = false
+    private var buyProduct = false
+    private var isShowingFinalProduct = false
+
+    // MARK: - Constraints
     private var helpBoxBottomConstraint: NSLayoutConstraint?
     private var helpBoxTrailingConstraint: NSLayoutConstraint?
     private var goshiBottomConstraint: NSLayoutConstraint?
     private var goshiTrailingConstraint: NSLayoutConstraint?
-    private var goshiImageView: UIImageView?
-    private var isShowingFinalProduct = false
 
+    // MARK: - Data
+    private var baseHexColor: String?
+    private var selectedMatchView: ScrapbookImageView?
+
+    // MARK: - Setup
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
     }
     
+    // MARK: - UI Setup
     private func setupUI() {
+        setupBackground()
+        setupGestureRecognizer()
+        setupGoshiImage()
+        setupHelpBox()
+        updateHelpBox(with: "Hi! What can I help you with?", fontSize: 18, buttons: [
+            ("Find my match", #selector(findMatchTapped)),
+            ("Buy a product", #selector(buyProductTapped))
+        ])
+        setHelpBoxPositionToCorner()
+    }
+    
+    private func setupBackground() {
         let blurEffectView = UIVisualEffectView(effect: UIBlurEffect(style: .extraLight))
         blurEffectView.frame = view.bounds
         blurEffectView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         view.addSubview(blurEffectView)
+    }
 
+    private func setupGestureRecognizer() {
         view.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(dismissChatbot)))
-
+    }
+    
+    private func setupGoshiImage() {
         let goshi = UIImageView(image: UIImage(named: "goshi"))
         goshi.translatesAutoresizingMaskIntoConstraints = false
         goshi.contentMode = .scaleAspectFit
-
         view.addSubview(goshi)
         goshiImageView = goshi
+    }
 
+    private func setupHelpBox() {
         helpBox = UIView()
         helpBox?.backgroundColor = UIColor(red: 1.0, green: 0.98, blue: 0.85, alpha: 1.0)
         helpBox?.layer.cornerRadius = 10
         helpBox?.layer.borderWidth = 1
-        helpBox?.layer.borderColor = UIColor(red: 1.0, green: 0.9, blue: 0.5, alpha: 1).cgColor //light yellow
+        helpBox?.layer.borderColor = UIColor(red: 1.0, green: 0.9, blue: 0.5, alpha: 1).cgColor
         helpBox?.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(helpBox!)
-
-        updateHelpBox(
-            with: "Hi! What can I help you with?",
-            fontSize: 18,
-            buttons: [
-                ("Find my match", #selector(findMatchTapped)),
-                ("Buy a product", #selector(buyProductTapped))
-            ]
-        )
-
-        setHelpBoxPositionToCorner()
     }
     
+    // MARK: - Help Box Positioning
     private func setHelpBoxPositionToCorner() {
-        helpBoxBottomConstraint?.isActive = false
-        helpBoxTrailingConstraint?.isActive = false
-        goshiBottomConstraint?.isActive = false
-        goshiTrailingConstraint?.isActive = false
+        deactivateHelpConstraints()
 
         helpBoxBottomConstraint = helpBox!.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -50)
         helpBoxTrailingConstraint = helpBox!.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -20)
@@ -74,21 +89,16 @@ class ChatbotViewController: UIViewController, UIImagePickerControllerDelegate, 
         goshiTrailingConstraint = goshiImageView!.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -20)
 
         NSLayoutConstraint.activate([
-            helpBoxBottomConstraint!,
-            helpBoxTrailingConstraint!,
+            helpBoxBottomConstraint!, helpBoxTrailingConstraint!,
             helpBox!.widthAnchor.constraint(equalToConstant: 300),
-            goshiBottomConstraint!,
-            goshiTrailingConstraint!,
+            goshiBottomConstraint!, goshiTrailingConstraint!,
             goshiImageView!.widthAnchor.constraint(equalToConstant: 300),
-            goshiImageView!.heightAnchor.constraint(equalToConstant: 200),
+            goshiImageView!.heightAnchor.constraint(equalToConstant: 200)
         ])
     }
     
     private func setHelpBoxPositionToCenter() {
-        helpBoxBottomConstraint?.isActive = false
-        helpBoxTrailingConstraint?.isActive = false
-        goshiBottomConstraint?.isActive = false
-        goshiTrailingConstraint?.isActive = false
+        deactivateHelpConstraints()
 
         helpBoxBottomConstraint = helpBox!.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: 120)
         helpBoxTrailingConstraint = helpBox!.centerXAnchor.constraint(equalTo: view.centerXAnchor)
@@ -96,15 +106,17 @@ class ChatbotViewController: UIViewController, UIImagePickerControllerDelegate, 
         goshiTrailingConstraint = goshiImageView!.centerXAnchor.constraint(equalTo: view.centerXAnchor)
 
         NSLayoutConstraint.activate([
-            helpBoxBottomConstraint!,
-            helpBoxTrailingConstraint!,
-            goshiBottomConstraint!,
-            goshiTrailingConstraint!
+            helpBoxBottomConstraint!, helpBoxTrailingConstraint!,
+            goshiBottomConstraint!, goshiTrailingConstraint!
         ])
 
         UIView.animate(withDuration: 0.4) {
             self.view.layoutIfNeeded()
         }
+    }
+    
+    private func deactivateHelpConstraints() {
+        [helpBoxBottomConstraint, helpBoxTrailingConstraint, goshiBottomConstraint, goshiTrailingConstraint].forEach { $0?.isActive = false }
     }
     
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
@@ -229,17 +241,79 @@ class ChatbotViewController: UIViewController, UIImagePickerControllerDelegate, 
         updateHelpBox(with: "Shore-ly! I can do that for you", fontSize: 30)
         findMatch = true
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            self.setHelpBoxPositionToCenter()
-            self.updateHelpBox(
-                with: "We need a photo of your face to find your perfect shade.\nPlease make sure you’re not wearing any makeup products, and are in a well-lit space.",
-                fontSize: 18,
-                buttons: [
-                    ("Take Picture", #selector(self.takeBareFacePicture)),
-                    ("Cancel", #selector(self.cancelBareFaceFlow))
-                ]
-            )
+        // Check product image count first
+        checkProductImageCount { hasEnough in
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                if hasEnough {
+                    // Proceed with tutorial flow
+                    self.setHelpBoxPositionToCenter()
+                    self.updateHelpBox(
+                        with: "We need a photo of your face to find your perfect shade.\nPlease make sure you’re not wearing any makeup products, and are in a well-lit space.",
+                        fontSize: 18,
+                        buttons: [
+                            ("Take Picture", #selector(self.takeBareFacePicture)),
+                            ("Cancel", #selector(self.cancelBareFaceFlow))
+                        ]
+                    )
+                } else {
+                    self.setHelpBoxPositionToCenter()
+                    self.goshiImageView?.image = UIImage(named: "goshi_thinking")
+                    self.updateHelpBox(
+                        with: "No Products to Analyze\n\nYou don’t have enough pictures of products in your Try-On Room yet. Add at least two product images to compare shades and find your match.",
+                        fontSize: 17,
+                        buttons: [
+                            ("Go to Try-On Page", #selector(self.redirectToTryOnPage)),
+                            ("Cancel", #selector(self.cancelBareFaceFlow))
+                        ]
+                    )
+                }
+            }
         }
+    }
+    
+    private func checkProductImageCount(completion: @escaping (Bool) -> Void) {
+        guard let uid = Auth.auth().currentUser?.uid else {
+            completion(false)
+            return
+        }
+
+        let db = Firestore.firestore()
+        let userDocRef = db.collection("users").document(uid)
+
+        userDocRef.getDocument { snapshot, error in
+            if let error = error {
+                print("Error fetching user data:", error)
+                completion(false)
+                return
+            }
+
+            guard let data = snapshot?.data(),
+                  let scrapbook = data["scrapbooks"] as? [String: Any],
+                  let photos = scrapbook["photos"] as? [[String: Any]] else {
+                completion(false)
+                return
+            }
+
+            completion(photos.count >= 2)
+        }
+    }
+    
+    @objc private func redirectToTryOnPage() {
+        self.presentingViewController?.dismiss(animated: true, completion: {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                let storyboard = UIStoryboard(name: "Main", bundle: nil)
+                if let tryonController = storyboard.instantiateViewController(withIdentifier: "TryOnWebViewController") as? TryOnWebViewController {
+                    let navController = UINavigationController(rootViewController: tryonController)
+                    navController.modalPresentationStyle = .fullScreen
+                    
+                    if let topVC = UIApplication.getTopViewController() {
+                        topVC.present(navController, animated: true, completion: nil)
+                    } else {
+                        print("Could not find a valid top view controller to present from.")
+                    }
+                }
+            }
+        })
     }
     
     @objc private func takeBareFacePicture() {
@@ -477,11 +551,16 @@ class ChatbotViewController: UIViewController, UIImagePickerControllerDelegate, 
         for (title, action) in buttons {
             let button = UIButton(type: .system)
             button.setTitle(title, for: .normal)
-            button.setTitleColor(.black, for: .normal)
             button.layer.cornerRadius = 10
-            button.backgroundColor = .white
             button.translatesAutoresizingMaskIntoConstraints = false
             button.addTarget(self, action: action, for: .touchUpInside)
+            if title == "Go to Try-On Page" || title == "Take Picture" {
+                button.setTitleColor(.white, for: .normal)
+                button.backgroundColor = .systemBlue
+            } else {
+                button.setTitleColor(.black, for: .normal)
+                button.backgroundColor = .white
+            }
             helpBox?.addSubview(button)
             
             constraints.append(contentsOf: [
@@ -506,5 +585,24 @@ class ChatbotViewController: UIViewController, UIImagePickerControllerDelegate, 
         }
 
         NSLayoutConstraint.activate(constraints)
+    }
+}
+
+extension UIApplication {
+    static func getTopViewController(base: UIViewController? =
+        UIApplication.shared.connectedScenes
+            .compactMap { ($0 as? UIWindowScene)?.keyWindow }
+            .first?.rootViewController) -> UIViewController? {
+        
+        if let nav = base as? UINavigationController {
+            return getTopViewController(base: nav.visibleViewController)
+        }
+        if let tab = base as? UITabBarController {
+            return getTopViewController(base: tab.selectedViewController)
+        }
+        if let presented = base?.presentedViewController {
+            return getTopViewController(base: presented)
+        }
+        return base
     }
 }

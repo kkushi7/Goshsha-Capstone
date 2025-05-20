@@ -148,8 +148,7 @@ class TryOnWebViewController: UIViewController, WKNavigationDelegate, WKUIDelega
                     TutorialStep(
                         title: "Explore Brands, Try On Products", 
                         description: "Scroll through our list of brands to find products that offer virtual try-ons. Try on these products right from their site!", 
-                        targetView: self.webView
-                    ),
+                        targetView: nil),
                     TutorialStep(
                         title: "Found a Look You Like? Save It",
                         description: "Tap to capture your current try-on look or save a product. Everything stays in one place- your try-on room.",
@@ -278,6 +277,7 @@ class TryOnWebViewController: UIViewController, WKNavigationDelegate, WKUIDelega
     
     @objc func doneButtonTapped() {
         // Dismiss the web view controller and go back to the previous screen
+        NotificationCenter.default.post(name: Notification.Name("ReloadScrapbookData"), object: nil)
         self.dismiss(animated: true, completion: nil)
     }
     

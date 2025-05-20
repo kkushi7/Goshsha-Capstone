@@ -35,6 +35,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         case delete(view: UIView, fromSuperview: UIView)
         case resize(view: UIView, from: CGAffineTransform, to: CGAffineTransform)
         case backgroundChange(from: UIColor?, to: UIColor?)
+        case bringToFront(view: UIView, fromIndex: Int, toIndex: Int)
     }
 
     override func viewDidLoad() {
@@ -57,6 +58,26 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         actionStack.removeAll()
 
         loadGroup.notify(queue: .main) {
+            self.isLoadingFromDatabase = false
+        }
+        NotificationCenter.default.addObserver(self, selector: #selector(reloadScrapbookData), name: Notification.Name("ReloadScrapbookData"), object: nil)
+    }
+    
+    @objc private func reloadScrapbookData() {
+        isLoadingFromDatabase = true
+
+        let group = DispatchGroup()
+        group.enter()
+        loadAllLayersInOrder {
+            group.leave()
+        }
+
+        group.enter()
+        loadBackground {
+            group.leave()
+        }
+
+        group.notify(queue: .main) {
             self.isLoadingFromDatabase = false
         }
     }
@@ -510,7 +531,10 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
     }
     
     @objc func returnButtonPressed() {
-        dismiss(animated: true, completion: nil)
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let rootVC = windowScene.windows.first?.rootViewController {
+            rootVC.dismiss(animated: true, completion: nil)
+        }
     }
 
     @objc private func selectImageFromLibrary() {
@@ -1171,14 +1195,20 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
     
     @objc private func handleImageTap(_ sender: UITapGestureRecognizer) {
         guard let imageView = sender.view as? ScrapbookImageView,
-              let container = imageView.superview else {
+              let container = imageView.superview,
+              let fromIndex = contentPanel.subviews.firstIndex(of: container) else {
             print("Tapped image has no stored URL.")
             return
         }
 
-        // Bring the tapped container to the front
+        // Move container to front visually
         contentPanel.bringSubviewToFront(container)
 
+        // Save z-layer change for undo
+        let toIndex = contentPanel.subviews.count - 1
+        actionStack.append(.bringToFront(view: container, fromIndex: fromIndex, toIndex: toIndex))
+
+        // Animate tap feedback
         UIView.animate(withDuration: 0.15, animations: {
             container.transform = container.transform.scaledBy(x: 1.05, y: 1.05)
         }) { _ in
@@ -1186,10 +1216,19 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
                 container.transform = .identity
             }
         }
-
-        if let urlString = imageView.firebaseURL {
-            print("Tapped image URL: \(urlString)")
+        if !isLoadingFromDatabase {
+            saveScrapbook()
         }
+    }
+    
+    func bringToFrontAction(for view: UIView) {
+        guard let parent = view.superview,
+              let fromIndex = parent.subviews.firstIndex(of: view) else { return }
+
+        parent.bringSubviewToFront(view)
+
+        let toIndex = parent.subviews.count - 1
+        actionStack.append(.bringToFront(view: view, fromIndex: fromIndex, toIndex: toIndex))
     }
 
     private func setBackgroundImage(image: UIImage) {
@@ -1373,6 +1412,14 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
             } else {
                 contentPanel.backgroundColor = nil
             }
+        case .bringToFront(let view, let fromIndex, _):
+            guard let parent = view.superview else { return }
+            var currentSubviews = parent.subviews.filter { $0 != view }
+            currentSubviews.insert(view, at: fromIndex)
+            
+            // Rebuild subview order
+            parent.subviews.forEach { $0.removeFromSuperview() }
+            currentSubviews.forEach { parent.addSubview($0) }
         }
         saveScrapbook()
     }
