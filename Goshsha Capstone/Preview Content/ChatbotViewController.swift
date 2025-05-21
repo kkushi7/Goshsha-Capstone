@@ -71,11 +71,12 @@ class ChatbotViewController: UIViewController, UIImagePickerControllerDelegate, 
 
     private func setupHelpBox() {
         helpBox = UIView()
-        helpBox?.backgroundColor = UIColor(red: 1.0, green: 0.98, blue: 0.85, alpha: 1.0)
-        helpBox?.layer.cornerRadius = 10
-        helpBox?.layer.borderWidth = 1
-        helpBox?.layer.borderColor = UIColor(red: 1.0, green: 0.9, blue: 0.5, alpha: 1).cgColor
+        helpBox?.backgroundColor = UIColor(red: 1.0, green: 0.95, blue: 0.75, alpha: 1.0)
+        helpBox?.layer.cornerRadius = 25
+        helpBox?.layer.borderWidth = 2
+        helpBox?.layer.borderColor = UIColor(red: 0.85, green: 0.65, blue: 0.0, alpha: 1.0).cgColor
         helpBox?.translatesAutoresizingMaskIntoConstraints = false
+        helpBox?.clipsToBounds = true
         view.addSubview(helpBox!)
     }
     
@@ -558,6 +559,8 @@ class ChatbotViewController: UIViewController, UIImagePickerControllerDelegate, 
             } else {
                 button.setTitleColor(.black, for: .normal)
                 button.backgroundColor = .white
+                button.layer.borderWidth = 1
+                button.layer.borderColor = UIColor.black.cgColor
             }
             helpBox?.addSubview(button)
             
