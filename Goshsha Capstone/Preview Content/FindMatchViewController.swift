@@ -79,24 +79,25 @@ class FindMatchViewController: UIViewController, UICollectionViewDelegate, UICol
         
         // Done Button
         doneButton = UIButton(type: .system)
-        doneButton.backgroundColor = UIColor(white: 0.9, alpha: 1)
         doneButton.setTitle("Done", for: .normal)
-        doneButton.setTitleColor(.black, for: .normal)
-        doneButton.layer.cornerRadius = 10
+        doneButton.setTitleColor(.white, for: .normal)
+        doneButton.layer.cornerRadius = 20
         doneButton.layer.masksToBounds = true
+        doneButton.isEnabled = false
+        doneButton.backgroundColor = UIColor.lightGray
         doneButton.translatesAutoresizingMaskIntoConstraints = false
         doneButton.addTarget(self, action: #selector(doneButtonTapped), for: .touchUpInside)
         doneButton.titleLabel?.font = UIFont.systemFont(ofSize: 24, weight: .bold)
-        doneButton.isEnabled = false
-        doneButton.alpha = 0.5
         view.addSubview(doneButton)
 
         //cancel button
         cancelButton = UIButton(type: .system)
-        cancelButton.backgroundColor = UIColor(white: 0.9, alpha: 1)
         cancelButton.setTitle("Cancel", for: .normal)
         cancelButton.setTitleColor(.black, for: .normal)
-        cancelButton.layer.cornerRadius = 10
+        cancelButton.backgroundColor = .white
+        cancelButton.layer.borderWidth = 1
+        cancelButton.layer.borderColor = UIColor.black.cgColor
+        cancelButton.layer.cornerRadius = 20
         cancelButton.layer.masksToBounds = true
         cancelButton.translatesAutoresizingMaskIntoConstraints = false
         cancelButton.addTarget(self, action: #selector(cancelButtonTapped), for: .touchUpInside)
@@ -210,15 +211,19 @@ class FindMatchViewController: UIViewController, UICollectionViewDelegate, UICol
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         if selectedProductIndex == indexPath {
+            // Deselect
             selectedProductIndex = nil
+            doneButton.isEnabled = false
+            doneButton.backgroundColor = UIColor.lightGray
+            doneButton.setTitleColor(.white, for: .normal)
         } else {
+            // Select
             selectedProductIndex = indexPath
+            doneButton.isEnabled = true
+            doneButton.backgroundColor = UIColor.systemBlue
+            doneButton.setTitleColor(.white, for: .normal)
         }
         
-        // Done button enabled ONLY if something is selected
-        doneButton.isEnabled = selectedProductIndex != nil
-        doneButton.alpha = selectedProductIndex != nil ? 1.0 : 0.5
-
         collectionView.reloadData()
     }
     
@@ -238,7 +243,8 @@ class FindMatchViewController: UIViewController, UICollectionViewDelegate, UICol
             titleLabel.text = "Select the second try-on image"
             selectedProductIndex = nil
             doneButton.isEnabled = false
-            doneButton.alpha = 0.5
+            doneButton.backgroundColor = UIColor.lightGray
+            doneButton.setTitleColor(.white, for: .normal)
             cancelButton.setTitle("Back", for: .normal)
             gridView.reloadData()
             
@@ -273,7 +279,8 @@ class FindMatchViewController: UIViewController, UICollectionViewDelegate, UICol
             titleLabel.text = "Select the first try-on image"
             selectedProductIndex = nil
             doneButton.isEnabled = false
-            doneButton.alpha = 0.5
+            doneButton.backgroundColor = UIColor.lightGray
+            doneButton.setTitleColor(.white, for: .normal)
             cancelButton.setTitle("Cancel", for: .normal)
             gridView.reloadData()
         }
