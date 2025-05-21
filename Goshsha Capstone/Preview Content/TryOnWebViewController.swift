@@ -24,6 +24,7 @@ class TryOnWebViewController: UIViewController, WKNavigationDelegate, WKUIDelega
     var scrapbookButton: UIBarButtonItem!
     var tutorialManager: TutorialManager?
     let saveToScrapbookButton = UIButton(type: .system)
+    var onDismiss: (() -> Void)?
     
     let db = Firestore.firestore();
     
@@ -162,9 +163,15 @@ class TryOnWebViewController: UIViewController, WKNavigationDelegate, WKUIDelega
     }
     
     @objc func openScrapbookEditPage() {
-        let scrapbookEditVC = NewScrapbook()
-        scrapbookEditVC.modalPresentationStyle = .fullScreen
-        present(scrapbookEditVC, animated: true, completion: nil)
+        if let topVC = UIApplication.getTopViewController(),
+           !(topVC is NewScrapbook) {
+            
+            let storyboard = UIStoryboard(name: "Main", bundle: nil)
+            if let scrapBookController = storyboard.instantiateViewController(withIdentifier: "NewScrapbook") as? NewScrapbook {
+                scrapBookController.modalPresentationStyle = .fullScreen
+                topVC.present(scrapBookController, animated: true, completion: nil)
+            }
+        }
     }
     
     private func fetchScrapbookCounts(completion: @escaping (Int, Int) -> Void) {
@@ -277,8 +284,9 @@ class TryOnWebViewController: UIViewController, WKNavigationDelegate, WKUIDelega
     
     @objc func doneButtonTapped() {
         // Dismiss the web view controller and go back to the previous screen
-        NotificationCenter.default.post(name: Notification.Name("ReloadScrapbookData"), object: nil)
-        self.dismiss(animated: true, completion: nil)
+        self.dismiss(animated: true) {
+            self.onDismiss?()
+        }
     }
     
     // Hide or show doneButton based on tryOnButton presence

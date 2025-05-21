@@ -299,21 +299,19 @@ class ChatbotViewController: UIViewController, UIImagePickerControllerDelegate, 
     }
     
     @objc private func redirectToTryOnPage() {
-        self.presentingViewController?.dismiss(animated: true, completion: {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                let storyboard = UIStoryboard(name: "Main", bundle: nil)
-                if let tryonController = storyboard.instantiateViewController(withIdentifier: "TryOnWebViewController") as? TryOnWebViewController {
-                    let navController = UINavigationController(rootViewController: tryonController)
-                    navController.modalPresentationStyle = .fullScreen
-                    
-                    if let topVC = UIApplication.getTopViewController() {
-                        topVC.present(navController, animated: true, completion: nil)
-                    } else {
-                        print("Could not find a valid top view controller to present from.")
+        // Dismiss all presented view controllers to return to root
+        if let rootVC = UIApplication.shared.windows.first(where: { $0.isKeyWindow })?.rootViewController {
+            rootVC.dismiss(animated: true) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    let storyboard = UIStoryboard(name: "Main", bundle: nil)
+                    if let tryonController = storyboard.instantiateViewController(withIdentifier: "TryOnWebViewController") as? TryOnWebViewController {
+                        let navController = UINavigationController(rootViewController: tryonController)
+                        navController.modalPresentationStyle = .fullScreen
+                        rootVC.present(navController, animated: true, completion: nil)
                     }
                 }
             }
-        })
+        }
     }
     
     @objc private func takeBareFacePicture() {
