@@ -211,7 +211,7 @@ class NewScrapbook: UIViewController, UIImagePickerControllerDelegate, UINavigat
         let image = createLabeledToolbarItem(imageName: "image", title: "IMAGES", action: #selector(cameraTapped))
         imageButtonView = image.customView
 
-        let goshi = createLabeledToolbarItem(imageName: "goshi", title: "GOSHI", action: #selector(goshiTapped))
+        let goshi = createLabeledToolbarItem(imageName: "goshi_navbar", title: "GOSHI", action: #selector(goshiTapped))
         goshiButtonView = goshi.customView
 
         toolbar.items = [
