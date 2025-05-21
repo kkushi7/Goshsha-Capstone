@@ -533,6 +533,7 @@ class ChatbotViewController: UIViewController, UIImagePickerControllerDelegate, 
         
         let helpLabel = UILabel()
         helpLabel.text = text
+        helpLabel.textColor = .black
         helpLabel.textAlignment = .center
         helpLabel.font = UIFont.systemFont(ofSize: fontSize)
         helpLabel.numberOfLines = 0
