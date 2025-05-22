@@ -260,7 +260,7 @@ class ChatbotViewController: UIViewController, UIImagePickerControllerDelegate, 
                     self.setHelpBoxPositionToCenter()
                     self.goshiImageView?.image = UIImage(named: "goshi_thinking")
                     self.updateHelpBox(
-                        with: "No Products to Analyze\n\nYou don’t have enough pictures of products in your Try-On Room yet. Add at least two product images to compare shades and find your match.",
+                        with: "No Products to Analyze\n\nYou don’t have enough pictures of products in your Try-On Room yet. Add at least two PRODUCT images to compare shades and find your match. No images of your face!",
                         fontSize: 17,
                         buttons: [
                             ("Go to Try-On Page", #selector(self.redirectToTryOnPage)),
