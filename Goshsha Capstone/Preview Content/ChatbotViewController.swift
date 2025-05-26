@@ -408,12 +408,41 @@ class ChatbotViewController: UIViewController, UIImagePickerControllerDelegate, 
                         self.present(resultsVC, animated: true)
                     }
                 } else {
-                    print("No visual matches found!")
+                    DispatchQueue.main.async {
+                        self.updateHelpBox(
+                            with: "Oh no, looks like no products were found. Make sure you’re using clear product images. Would you like to try selecting two images again?",
+                            fontSize: 17,
+                            buttons: [
+                                ("Yes, try again", #selector(self.retryImageSelection)),
+                                ("No", #selector(self.dismissAfterPause))
+                            ]
+                        )
+                        self.setHelpBoxPositionToCenter()
+                    }
                 }
 
             case .failure(let error):
                 print("Search failed:", error)
             }
+        }
+    }
+    
+    @objc private func retryImageSelection() {
+        setHelpBoxPositionToCorner()
+        
+        let findMatchVC = FindMatchViewController()
+        findMatchVC.modalPresentationStyle = .fullScreen
+        findMatchVC.onMatchAnalysisComplete = { hex1, hex2, view1, view2 in
+            self.shadeAnalyzeBot(hex1: hex1, hex2: hex2, view1: view1, view2: view2)
+        }
+        self.present(findMatchVC, animated: true)
+    }
+
+    @objc private func dismissAfterPause() {
+        self.updateHelpBox(with: "Alright, closing the assistant...", fontSize: 17)
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            self.dismiss(animated: true)
         }
     }
 
@@ -428,6 +457,7 @@ class ChatbotViewController: UIViewController, UIImagePickerControllerDelegate, 
         let better = diff1 < diff2 ? "first" : "second"
         updateHelpBox(with: "Between these two, I think the \(better) one is your tidal match!", fontSize: 26)
         showComparisonImages(image1: view1.image, image2: view2.image, highlightFirst: diff1 < diff2)
+        self.isShowingFinalProduct = false
     }
     
     private func showComparisonImages(image1: UIImage?, image2: UIImage?, highlightFirst: Bool) {
