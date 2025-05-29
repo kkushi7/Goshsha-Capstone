@@ -327,6 +327,10 @@ class ChatbotViewController: UIViewController, UIImagePickerControllerDelegate, 
 
     @objc private func buyProductTapped() {
         updateHelpBox(with: "Let me find that for you!", fontSize: 30)
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            self.redirectToTryOnPage()
+        }
     }
 
     @objc private func buyConfirmed(for imageView: ScrapbookImageView) {
