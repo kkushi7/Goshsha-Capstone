@@ -1,4 +1,4 @@
-## Project: Goshsha Capstone
+# Project: Goshsha Capstone
 
 ## Description:
 This project implements an interactive try-on room iOS application built with UIKit and integrated with Firebase and Google Lens. The app allows users to compare products that better suit them, as well as allowing users to upload, arrange, and customize images and stickers within the interface. Key functionalities include:
