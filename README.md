@@ -4,10 +4,11 @@
 This project implements an interactive try-on room iOS application built with UIKit and integrated with Firebase and Google Lens. The app allows users to compare products that better suit them, as well as allowing users to upload, arrange, and customize images and stickers within the interface. Key functionalities include:
 
 - Chatbot functionality for Shade Match and Buy Product
+- Save product images from the virtual try on page, to the try-on room 
 - Adding, moving, resizing, and layering images or stickers with gesture controls
 - Selecting and setting backgrounds (solid color, gradient)
 - Applying a polaroid-style frame to images
-- Undo/redo/delete actions
+- Undo/delete actions
 - Persisting all try-on room data (images, positions, transformations, background) to Firebase Storage
 - Integrating a tutorial for first-time users
 - Using Google Lens to analyze user images for visual search and product match suggestions
