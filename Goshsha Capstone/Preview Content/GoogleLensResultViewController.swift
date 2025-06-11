@@ -2,7 +2,7 @@
 //  GoogleLensResultViewController.swift
 //  Goshsha Capstone
 //
-//  Created by Amber Chang on 4/26/25.
+//  Created by Yu-Shin Chang and Kushi Kumbagowdanaon on 4/26/25.
 //
 
 import UIKit

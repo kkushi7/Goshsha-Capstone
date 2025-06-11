@@ -2,7 +2,7 @@
 //  ProductImageCell.swift
 //  Goshsha Capstone
 //
-//  Created by Amber Chang on 2/27/25.
+//  Created by Yu-Shin Chang and Kushi Kumbagowdanaon on 2/27/25.
 //
 
 import UIKit

@@ -2,46 +2,32 @@
 //  GoogleLensService.swift
 //  Goshsha Capstone
 //
-//  Created by Amber Chang on 2/19/25.
+//  Created by Yu-Shin Chang and Kushi Kumbagowdanaon on 2/19/25.
 //
 
-import UIKit
 import Foundation
 
 class GoogleLensService {
-    static func searchWithGoogleLens(url: String, completion: @escaping (Result<Any, Error>) -> Void) {
+    // reppace with your own api key obtained from the SerpApi.com
+    private static let apiKey = ""
+    private static let apiBaseURL = "https://serpapi.com/search"
 
-        let apiKey = "7358a7044289d5d8336e0957355613fdeb75f3fc46bad3d1da729ee8a6f5853f"
-        let apiUrl = "https://serpapi.com/search"
-        
-        let imageUrl = url
-//        let correctedUrl = imageUrl.removingPercentEncoding ?? imageUrl
-        let parameters = [
-            "engine": "google_lens",
-            "url": imageUrl,
-            "api_key": apiKey
+    static func searchWithGoogleLens(imageURL: String, completion: @escaping (Result<Any, Error>) -> Void) {
+        var urlComponents = URLComponents(string: apiBaseURL)
+        urlComponents?.queryItems = [
+            URLQueryItem(name: "engine", value: "google_lens"),
+            URLQueryItem(name: "url", value: imageURL),
+            URLQueryItem(name: "api_key", value: apiKey)
         ]
 
-        var urlComponents = URLComponents(string: apiUrl)!
-        urlComponents.queryItems = parameters.map { URLQueryItem(name: $0.key, value: $0.value) }
-
-        guard let url = urlComponents.url else{
-            completion(.failure(NSError(domain: "Invalid Url", code: -1)))
+        guard let finalURL = urlComponents?.url else {
+            completion(.failure(NSError(domain: "InvalidURL", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to build URL."])))
             return
         }
 
-        // query
-        let urlWithParams = apiUrl + "?" + parameters.map { "\($0.key)=\($0.value)" }.joined(separator: "&")
-        
-        // request
-        guard let url = URL(string: urlWithParams) else {
-            completion(.failure(NSError(domain: "URLError", code: -1, userInfo: [NSLocalizedDescriptionKey: "invalid URL."])))
-            return
-        }
-
-        var request = URLRequest(url: url)
+        var request = URLRequest(url: finalURL)
         request.httpMethod = "GET"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
 
         let task = URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {
@@ -50,23 +36,23 @@ class GoogleLensService {
             }
 
             guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-                completion(.failure(NSError(domain: "HTTPError", code: 0, userInfo: [NSLocalizedDescriptionKey: "request failed."])))
+                let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
+                completion(.failure(NSError(domain: "HTTPError", code: statusCode, userInfo: [NSLocalizedDescriptionKey: "Unexpected response."])))
                 return
             }
 
             guard let data = data else {
-                completion(.failure(NSError(domain: "no data", code: -1, userInfo: nil)))
+                completion(.failure(NSError(domain: "DataError", code: -1, userInfo: [NSLocalizedDescriptionKey: "No data received."])))
                 return
             }
 
             do {
-                let jsonResponse = try JSONSerialization.jsonObject(with: data, options: [])
-                completion(.success(jsonResponse))
+                let json = try JSONSerialization.jsonObject(with: data, options: [])
+                completion(.success(json))
             } catch {
                 completion(.failure(error))
             }
         }
         task.resume()
     }
-
 }

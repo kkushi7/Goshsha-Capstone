@@ -2,7 +2,7 @@
 //  ColorSelectionViewController.swift
 //  Goshsha Capstone
 //
-//  Created by Amber Chang on 5/1/25.
+//  Created by Yu-Shin Chang and Kushi Kumbagowdanaon on 5/1/25.
 //
 
 import UIKit

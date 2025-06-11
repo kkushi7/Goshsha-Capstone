@@ -2,7 +2,7 @@
 //  ChatbotViewController.swift
 //  Goshsha Capstone
 //
-//  Created by Amber Chang on 2/26/25.
+//  Created by Yu-Shin Chang and Kushi Kumbagowdanaon on 2/26/25.
 //
 
 import UIKit
@@ -385,7 +385,7 @@ class ChatbotViewController: UIViewController, UIImagePickerControllerDelegate, 
     
     // able to put any link from products
     private func getRelatedProducts(url: String){
-        GoogleLensService.searchWithGoogleLens(url: url) { result in
+        GoogleLensService.searchWithGoogleLens(imageURL: url) { result in
             switch result {
             case .success(let data):
                 print("Search success:", data)
