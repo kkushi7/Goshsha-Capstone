@@ -19,3 +19,8 @@
   - Find Goshsha_Capstone Project -> Build Settings -> Packaging -> Info.plist File, and paste path to it
   - Generate Info.plist File -> No
   - Make sure in Build Phases, the Info.plist in Copy Bundle Resources is removed.
+
+## To Setup
+- Go to https://serpapi.com/google-lens-api and register an account
+- Get the API key for your account
+- Add your key to the GoogleLensService.swift (Line 12)
