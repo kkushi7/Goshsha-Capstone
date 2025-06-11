@@ -2,7 +2,7 @@
 //  TutorialManager.swift
 //  Goshsha Capstone
 //
-//  Created by Amber Chang on 5/16/25.
+//  Created by Yu-Shin Chang and Kushi Kumbagowdanaon on 5/16/25.
 //
 
 import UIKit

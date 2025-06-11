@@ -2,7 +2,7 @@
 //  ScrapbookImageView.swift
 //  Goshsha Capstone
 //
-//  Created by Amber Chang on 4/23/25.
+//  Created by Yu-Shin Chang and Kushi Kumbagowdanaon on 4/23/25.
 //
 
 import UIKit

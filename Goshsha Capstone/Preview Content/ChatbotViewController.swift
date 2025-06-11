@@ -2,7 +2,7 @@
 //  ChatbotViewController.swift
 //  Goshsha Capstone
 //
-//  Created by Amber Chang on 2/26/25.
+//  Created by Yu-Shin Chang and Kushi Kumbagowdanaon on 2/26/25.
 //
 
 import UIKit

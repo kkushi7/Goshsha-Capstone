@@ -2,7 +2,7 @@
 //  GradientView.swift
 //  Goshsha Capstone
 //
-//  Created by Amber Chang on 3/13/25.
+//  Created by Yu-Shin Chang and Kushi Kumbagowdanaon on 3/13/25.
 //
 
 import UIKit
